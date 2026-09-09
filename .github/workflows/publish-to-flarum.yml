@@ -166,13 +166,43 @@ jobs:
             CONTENT="$CONTENT_MD"
           fi
 
-          # 🚨 <tt> is not in Scribe's allowed vocabulary, so the site ESCAPES it
-          # and the announcement shows a literal "&lt;tt&gt;" to every reader.
-          # GitHub's GFM renderer emits it unprompted: a bare compare URL is
-          # autolinked as <a class="commit-link">owner/repo@<tt>a...b</tt></a>,
-          # which is exactly the "Full Changelog" line release notes end with.
-          # <code> renders identically and is allowed.
-          CONTENT=$(printf '%s' "$CONTENT" | sed -e 's|<tt>|<code>|g' -e 's|</tt>|</code>|g')
+          # 🚨 Flarum accepts a narrow HTML vocabulary and ESCAPES everything
+          # outside it, so anything GitHub's renderer emits that Flarum does
+          # not allow is shown to readers as literal tag text. Four fixes,
+          # every one of them observed on a real post on the support site:
+          #
+          #  1. <tt> — GitHub autolinks a bare compare URL as
+          #     <a class="commit-link">owner/repo@<tt>a..b</tt></a>, which is
+          #     exactly the "Full Changelog" line release notes end with.
+          #     <code> renders identically and is allowed.
+          #  2. <div class="highlight..."> wrapped around every fenced code
+          #     block.
+          #  3. <markdown-accessiblity-table> wrapped around every table --
+          #     GitHub's own spelling of "accessibility", so match it exactly.
+          #  4. Entities. GitHub escapes `<script>` to &lt;script&gt; inside
+          #     <code>; Flarum escapes the ampersand again, and the reader is
+          #     shown "&lt;script&gt;". Send the literal characters and let
+          #     Flarum escape them exactly once.
+          #
+          # 🚨 The captures are copied into lexicals before the inner
+          # substitutions run. Those substitutions reset $1, so building the
+          # replacement straight from $1 silently drops the opening <code>
+          # tag and leaves a stray </code> in the text.
+          CONTENT=$(printf '%s' "$CONTENT" | perl -0777 -pe '
+            s|<tt>|<code>|g;
+            s|</tt>|</code>|g;
+            s|<div class="highlight[^"]*">\s*||g;
+            s|</pre>\s*</div>|</pre>|g;
+            s|</?markdown-accessiblity-table>||g;
+            s{(<code[^>]*>)(.*?)</code>}{
+              my ($open, $inner) = ($1, $2);
+              $inner =~ s{&lt;}{<}g;
+              $inner =~ s{&gt;}{>}g;
+              $inner =~ s{&amp;}{&}g;
+              $open . $inner . "</code>";
+            }ges;
+            s|&amp;|&|g;
+          ')
 
           PAYLOAD=$(jq -n \
             --arg content "$CONTENT" \
