@@ -500,7 +500,15 @@ export default class LogoStudio extends Component<{ valueStream: (v?: string) =>
         select(
           'seasons_timezone',
           this.cfg.seasons.timezone || '',
-          [{ value: '', label: '—' }, ...(Intl as any).supportedValuesOf?.('timeZone').map((z: string) => ({ value: z, label: z }))].filter(Boolean),
+          // A dash for the default read as an empty, broken-looking box. It
+          // is also the option most people will leave selected, so it says
+          // what it does. `supportedValuesOf` is guarded because spreading
+          // `undefined` into an array literal throws rather than yielding
+          // nothing.
+          [
+            { value: '', label: t('seasons_timezone_default') },
+            ...(((Intl as any).supportedValuesOf?.('timeZone') as string[] | undefined) ?? []).map((z) => ({ value: z, label: z })),
+          ],
           (v) => this.set('seasons.timezone', v),
           'seasons_timezone_help'
         ),

@@ -93,6 +93,7 @@ ernestdefoe-logo-manager:
     seasons_enabled: Run the seasonal schedule
     seasons_timezone: Time zone
     seasons_timezone_help: Which clock decides when a season starts and ends.
+    seasons_timezone_default: Server default
     season_add: Add a season
     season_presets: Or start from one of these
     season_name: Name
