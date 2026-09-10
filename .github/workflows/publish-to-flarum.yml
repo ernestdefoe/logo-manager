@@ -120,6 +120,11 @@ jobs:
         run: |
           set -euo pipefail
 
+          # 🚨 Skip, do not fail, when the announcement is not configured.
+          # A repository with no support discussion is a normal state — a new
+          # extension, a private one, one that simply is not announced. Exiting
+          # 1 painted a red X on every release of every such repo, which trains
+          # people to ignore the one failure that does matter.
           if [ -z "${FLARUM_FORUM_URL}" ] || [ -z "${FLARUM_DISCUSSION_ID}" ] || [ -z "${FLARUM_API_KEY}" ]; then
             echo "::notice::No support discussion configured for this repository — skipping the announcement. Set the FLARUM_FORUM_URL and FLARUM_DISCUSSION_ID variables and the FLARUM_API_KEY secret to enable it."
             exit 0
@@ -166,28 +171,25 @@ jobs:
             CONTENT="$CONTENT_MD"
           fi
 
-          # 🚨 Flarum accepts a narrow HTML vocabulary and ESCAPES everything
-          # outside it, so anything GitHub's renderer emits that Flarum does
-          # not allow is shown to readers as literal tag text. Four fixes,
-          # every one of them observed on a real post on the support site:
-          #
-          #  1. <tt> — GitHub autolinks a bare compare URL as
-          #     <a class="commit-link">owner/repo@<tt>a..b</tt></a>, which is
-          #     exactly the "Full Changelog" line release notes end with.
-          #     <code> renders identically and is allowed.
-          #  2. <div class="highlight..."> wrapped around every fenced code
-          #     block.
-          #  3. <markdown-accessiblity-table> wrapped around every table --
-          #     GitHub's own spelling of "accessibility", so match it exactly.
-          #  4. Entities. GitHub escapes `<script>` to &lt;script&gt; inside
-          #     <code>; Flarum escapes the ampersand again, and the reader is
-          #     shown "&lt;script&gt;". Send the literal characters and let
-          #     Flarum escape them exactly once.
+          # 🚨 <tt> is not in Scribe's allowed vocabulary, so the site ESCAPES it
+          # and the announcement shows a literal "&lt;tt&gt;" to every reader.
+          # GitHub's GFM renderer emits it unprompted: a bare compare URL is
+          # autolinked as <a class="commit-link">owner/repo@<tt>a...b</tt></a>,
+          # which is exactly the "Full Changelog" line release notes end with.
+          # <code> renders identically and is allowed.
+          # 🚨 Three more cases of the very same problem, every one of them
+          # seen in a published post. GitHub also wraps fenced code blocks in
+          # <div class="highlight..."> and tables in
+          # <markdown-accessiblity-table> (their spelling of "accessibility",
+          # so match it exactly), and it escapes `<script>` to &lt;script&gt;
+          # inside <code> — which Flarum then escapes AGAIN, so the reader is
+          # shown the entity instead of the tag. Send the literal characters
+          # and let Flarum escape them exactly once.
           #
           # 🚨 The captures are copied into lexicals before the inner
           # substitutions run. Those substitutions reset $1, so building the
           # replacement straight from $1 silently drops the opening <code>
-          # tag and leaves a stray </code> in the text.
+          # tag and leaves a stray </code> behind in the prose.
           CONTENT=$(printf '%s' "$CONTENT" | perl -0777 -pe '
             s|<tt>|<code>|g;
             s|</tt>|</code>|g;
