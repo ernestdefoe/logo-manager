@@ -200,12 +200,24 @@ class StyleSheet
     {
         $plate = $this->config->plate();
 
+        // 🚨 Block-level `flex` shrunk to the logo, never `inline-flex`.
+        //
+        // Core's logo is a `display:block` image, so the anchor wrapping it
+        // never takes part in a line box. Making the anchor inline put it
+        // back in one, and that moved the logo twice over: on desktop it sat
+        // on the text baseline of the title's 34px line, leaving the
+        // descender gap underneath and riding visibly high of the nav; in
+        // the phone drawer it obeyed the title's `text-align:center`, which
+        // core's block image ignores, so the logo slid right of where core
+        // puts it. `fit-content` keeps the box exactly the logo's size for
+        // the plate and the overlays positioned against it.
+        $anchor = '.App-header .Header-title>a{position:relative;display:flex;align-items:center;width:fit-content;max-width:100%';
+
         if (! $plate['enabled']) {
-            return '.App-header .Header-title>a{position:relative;display:inline-flex;align-items:center}';
+            return $anchor.'}';
         }
 
-        return '.App-header .Header-title>a{position:relative;display:inline-flex;align-items:center;'
-            ."background:{$plate['color']};padding:{$plate['padding']}px;border-radius:{$plate['radius']}px}";
+        return $anchor.";background:{$plate['color']};padding:{$plate['padding']}px;border-radius:{$plate['radius']}px}";
     }
 
     /** The filter chain, plus the pixelate filter when one is in play. */
