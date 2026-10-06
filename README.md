@@ -204,6 +204,7 @@ particles stay; they just stop moving.
 
 - [Report a bug or ask for a feature](https://github.com/ernestdefoe/logo-manager/issues)
 - [Source](https://github.com/ernestdefoe/logo-manager)
+- [Discuss on discuss.flarum.org](https://discuss.flarum.org/d/39835-logo-manager)
 
 ## Licence
 
