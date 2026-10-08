@@ -136,6 +136,44 @@ class LogoManagerTest extends TestCase
     }
 
     #[Test]
+    public function emails_show_the_permanent_logo_not_the_one_it_replaced()
+    {
+        if (! class_exists(\Flarum\Mail\EmailLogo::class)) {
+            $this->markTestSkipped('Emails have had their own copy of the logo since Flarum 2.0.0.');
+        }
+
+        // The copy core made when the old logo was uploaded on its own page.
+        $settings = $this->app()->getContainer()->make(\Flarum\Settings\SettingsRepositoryInterface::class);
+        $this->disk()->put('logo-email-old.png', $this->png());
+        $settings->set('logo_email_copy_path', 'logo-email-old.png');
+        $settings->set('logo_email_copy_size', '40x20');
+
+        $this->upload('base', 'light', 1, $this->file($this->png(300, 100)));
+        $copy = $this->stored('logo_email_copy_path');
+        $this->assertNotSame('logo-email-old.png', $copy, 'The replaced logo is not mailed any more');
+        $this->assertFalse($this->disk()->exists('logo-email-old.png'));
+        $this->assertStringEndsWith('.png', (string) $copy, 'Mail clients get a PNG, not the WebP');
+        $this->assertTrue($this->disk()->exists($copy));
+        $this->assertSame('300x100', $this->stored('logo_email_copy_size'));
+
+        $this->upload('base', 'dark', 1);
+        $this->upload('season-1', 'light', 1);
+        $this->assertSame($copy, $this->stored('logo_email_copy_path'), 'Only the permanent light logo is mailed');
+
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="120" height="40"><rect width="120" height="40" fill="red"/></svg>';
+        $this->upload('base', 'light', 1, $this->file($svg, 'logo.svg', 'image/svg+xml'));
+        $this->assertNull($this->stored('logo_email_copy_path'), 'An SVG leaves emails on logo_path, as before 2.0');
+        $this->assertFalse($this->disk()->exists($copy));
+
+        $this->upload('base', 'light', 1);
+        $copy = $this->stored('logo_email_copy_path');
+        $this->assertNotNull($copy);
+        $this->assertSame(200, $this->remove('base', 'light', 1));
+        $this->assertNull($this->stored('logo_email_copy_path'), 'A removed logo is not mailed');
+        $this->assertFalse($this->disk()->exists($copy));
+    }
+
+    #[Test]
     public function a_seasons_logo_is_returned_not_written_to_settings()
     {
         [$status, $body] = $this->upload('winter', 'light', 1);

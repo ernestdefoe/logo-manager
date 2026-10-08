@@ -2,6 +2,7 @@
 
 namespace Ernestdefoe\LogoManager\Api\Controller;
 
+use Ernestdefoe\LogoManager\Logo\EmailCopy;
 use Ernestdefoe\LogoManager\Logo\LogoStore;
 use Flarum\Foundation\ValidationException;
 use Flarum\Http\RequestUtil;
@@ -42,6 +43,7 @@ class UploadLogoController implements RequestHandlerInterface
         protected LogoStore $store,
         protected SettingsRepositoryInterface $settings,
         protected TranslatorInterface $translator,
+        protected EmailCopy $emailCopy,
     ) {
     }
 
@@ -68,6 +70,10 @@ class UploadLogoController implements RequestHandlerInterface
             $key = self::SETTING[$variant];
             $this->store->delete($this->settings->get($key));
             $this->settings->set($key, $filename);
+
+            if ($variant === 'light') {
+                $this->emailCopy->refresh($file, $filename);
+            }
         }
 
         return new JsonResponse([

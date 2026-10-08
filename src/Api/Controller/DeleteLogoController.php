@@ -2,6 +2,7 @@
 
 namespace Ernestdefoe\LogoManager\Api\Controller;
 
+use Ernestdefoe\LogoManager\Logo\EmailCopy;
 use Ernestdefoe\LogoManager\Logo\LogoStore;
 use Flarum\Http\RequestUtil;
 use Flarum\Settings\SettingsRepositoryInterface;
@@ -23,6 +24,7 @@ class DeleteLogoController implements RequestHandlerInterface
     public function __construct(
         protected LogoStore $store,
         protected SettingsRepositoryInterface $settings,
+        protected EmailCopy $emailCopy,
     ) {
     }
 
@@ -38,6 +40,10 @@ class DeleteLogoController implements RequestHandlerInterface
             $key = UploadLogoController::SETTING[$variant];
             $this->store->delete($this->settings->get($key));
             $this->settings->set($key, null);
+
+            if ($variant === 'light') {
+                $this->emailCopy->forget();
+            }
         }
 
         $this->store->forget($scope, $variant);
