@@ -16,7 +16,7 @@ use Psr\Http\Server\RequestHandlerInterface;
 use RuntimeException;
 
 /**
- * POST /api/logo-manager/logos/{scope}/{variant}
+ * POST /api/logo-manager/logos/{scope}/{variant}.
  *
  * `scope` is either `base` — the forum's permanent logo — or the id of a
  * season. The permanent logo is written straight into core's own

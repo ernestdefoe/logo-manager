@@ -417,7 +417,7 @@ class StyleSheet
         // particles go there instead.
         return '.App-header,.App-navigation{position:relative}'
             ."@media (min-width:768px){.App-header::before{{$layer}}}"
-            ."@media (max-width:".self::PHONE_BREAKPOINT."){.App-navigation::before{{$layer}}}"
+            .'@media (max-width:'.self::PHONE_BREAKPOINT."){.App-navigation::before{{$layer}}}"
             .'@keyframes lm-weather{from{background-position:'.implode(',', $from).'}'
             .'to{background-position:'.implode(',', $to).'}}'
             // Motion is decoration here and nothing is lost by holding it

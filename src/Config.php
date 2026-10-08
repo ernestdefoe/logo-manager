@@ -41,16 +41,16 @@ class Config
      * value for that filter, so an untouched config produces no filter at all.
      */
     public const EFFECTS = [
-        'grayscale'  => [0, 0, 100],
-        'sepia'      => [0, 0, 100],
-        'invert'     => [0, 0, 100],
-        'saturate'   => [100, 0, 400],
+        'grayscale' => [0, 0, 100],
+        'sepia' => [0, 0, 100],
+        'invert' => [0, 0, 100],
+        'saturate' => [100, 0, 400],
         'brightness' => [100, 0, 300],
-        'contrast'   => [100, 0, 300],
-        'hueRotate'  => [0, 0, 360],
-        'blur'       => [0, 0, 20],
-        'opacity'    => [100, 0, 100],
-        'pixelate'   => [0, 0, 24],
+        'contrast' => [100, 0, 300],
+        'hueRotate' => [0, 0, 360],
+        'blur' => [0, 0, 20],
+        'opacity' => [100, 0, 100],
+        'pixelate' => [0, 0, 24],
     ];
 
     protected array $data;
@@ -124,9 +124,9 @@ class Config
     {
         return [
             'enabled' => (bool) ($this->data['plate']['enabled'] ?? false),
-            'color'   => $this->color(['plate', 'color'], '#ffffff'),
+            'color' => $this->color(['plate', 'color'], '#ffffff'),
             'padding' => $this->int(['plate', 'padding'], 6, 0, 60),
-            'radius'  => $this->int(['plate', 'radius'], 8, 0, 100),
+            'radius' => $this->int(['plate', 'radius'], 8, 0, 100),
         ];
     }
 
@@ -134,10 +134,10 @@ class Config
     {
         return [
             'enabled' => (bool) ($this->data['shadow']['enabled'] ?? false),
-            'color'   => $this->color(['shadow', 'color'], '#000000'),
-            'x'       => $this->int(['shadow', 'x'], 0, -40, 40),
-            'y'       => $this->int(['shadow', 'y'], 2, -40, 40),
-            'blur'    => $this->int(['shadow', 'blur'], 6, 0, 60),
+            'color' => $this->color(['shadow', 'color'], '#000000'),
+            'x' => $this->int(['shadow', 'x'], 0, -40, 40),
+            'y' => $this->int(['shadow', 'y'], 2, -40, 40),
+            'blur' => $this->int(['shadow', 'blur'], 6, 0, 60),
         ];
     }
 
@@ -167,7 +167,7 @@ class Config
 
         return [
             'enabled' => (bool) ($source['enabled'] ?? false),
-            'color'   => $this->hex($source['color'] ?? null) ?? '#ffffff',
+            'color' => $this->hex($source['color'] ?? null) ?? '#ffffff',
         ];
     }
 

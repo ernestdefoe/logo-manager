@@ -12,7 +12,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
 /**
- * DELETE /api/logo-manager/logos/{scope}/{variant}
+ * DELETE /api/logo-manager/logos/{scope}/{variant}.
  *
  * Removes the files for one slot, and for the permanent logo also clears
  * core's setting so the header falls back to the forum title — the same end

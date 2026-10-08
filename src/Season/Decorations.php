@@ -258,7 +258,6 @@ class Decorations
         return round($pixels / max(1, $tile) * 100, 3);
     }
 
-
     /**
      * Wrap a fragment in an <svg> and encode it for use inside `url("…")`.
      *
