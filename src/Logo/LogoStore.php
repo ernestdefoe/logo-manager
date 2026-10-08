@@ -2,8 +2,8 @@
 
 namespace Ernestdefoe\LogoManager\Logo;
 
+use Illuminate\Contracts\Filesystem\Cloud;
 use Illuminate\Contracts\Filesystem\Factory;
-use Illuminate\Contracts\Filesystem\Filesystem;
 use Intervention\Image\ImageManager;
 use Psr\Http\Message\UploadedFileInterface;
 use RuntimeException;
@@ -36,14 +36,22 @@ class LogoStore
 
     public const RASTER_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
 
-    protected Filesystem $disk;
+    protected Cloud $disk;
 
     public function __construct(
         Factory $filesystem,
         protected ImageManager $images,
         protected SvgSanitizer $svg,
     ) {
-        $this->disk = $filesystem->disk('flarum-assets');
+        $disk = $filesystem->disk('flarum-assets');
+
+        // url() is on Cloud, not the base contract; core types this disk the
+        // same way (Frontend\Assets, ExtensionManager).
+        if (! $disk instanceof Cloud) {
+            throw new RuntimeException('The flarum-assets disk cannot produce public URLs.');
+        }
+
+        $this->disk = $disk;
     }
 
     /**
