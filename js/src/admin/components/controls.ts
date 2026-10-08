@@ -16,27 +16,12 @@ const t = (key: string, params?: any) => app.translator.trans(`ernestdefoe-logo-
  */
 
 export function section(title: string, help: string | null, ...body: any[]) {
-  return m('.LogoManager-section', [
-    m('h3.LogoManager-sectionTitle', t(title)),
-    help ? m('.LogoManager-sectionHelp', t(help)) : null,
-    ...body,
-  ]);
+  return m('.LogoManager-section', [m('h3.LogoManager-sectionTitle', t(title)), help ? m('.LogoManager-sectionHelp', t(help)) : null, ...body]);
 }
 
-export function slider(
-  label: string,
-  value: number,
-  min: number,
-  max: number,
-  unit: string,
-  onchange: (v: number) => void,
-  help?: string
-) {
+export function slider(label: string, value: number, min: number, max: number, unit: string, onchange: (v: number) => void, help?: string) {
   return m('.LogoManager-row.LogoManager-row--slider', [
-    m('.LogoManager-rowHead', [
-      m('label.LogoManager-label', t(label)),
-      m('output.LogoManager-value', `${value}${unit}`),
-    ]),
+    m('.LogoManager-rowHead', [m('label.LogoManager-label', t(label)), m('output.LogoManager-value', `${value}${unit}`)]),
     m('input.LogoManager-slider[type=range]', {
       min,
       max,
@@ -68,19 +53,10 @@ export function colour(label: string, value: string, onchange: (v: string) => vo
 }
 
 export function toggle(label: string, checked: boolean, onchange: (v: boolean) => void, help?: string) {
-  return m('.LogoManager-row', [
-    Switch.component({ state: checked, onchange }, t(label)),
-    help ? m('.LogoManager-help', t(help)) : null,
-  ]);
+  return m('.LogoManager-row', [Switch.component({ state: checked, onchange }, t(label)), help ? m('.LogoManager-help', t(help)) : null]);
 }
 
-export function select(
-  label: string | null,
-  value: string,
-  options: { value: string; label: any }[],
-  onchange: (v: string) => void,
-  help?: string
-) {
+export function select(label: string | null, value: string, options: { value: string; label: any }[], onchange: (v: string) => void, help?: string) {
   return m('.LogoManager-row', [
     label ? m('label.LogoManager-label', t(label)) : null,
     m(
@@ -116,13 +92,7 @@ export function segmented(label: string, value: string, options: { value: string
  * Picking a snowflake from a dropdown that says "snow-cap" is guessing; the
  * ornament is the only description of itself that matters, so it is shown.
  */
-export function artGrid(
-  value: string | null,
-  names: string[],
-  art: Record<string, string>,
-  labelKey: string,
-  onchange: (v: string | null) => void
-) {
+export function artGrid(value: string | null, names: string[], art: Record<string, string>, labelKey: string, onchange: (v: string | null) => void) {
   return m('.LogoManager-artGrid', [
     m(
       'button.LogoManager-art.LogoManager-art--none',

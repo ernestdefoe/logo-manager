@@ -163,71 +163,63 @@ export default class LogoStudio extends Component<{ valueStream: (v?: string) =>
       m(
         '.LogoManager-previewStage',
         { className: this.dark ? 'is-dark' : '' },
-        m(
-          '.LogoManager-mockHeader',
-          { style: { height: `${height}px` } },
-          [
-            weatherLayers.length
-              ? m('.LogoManager-mockWeather', {
-                  style: {
-                    backgroundImage: weatherLayers.map((l) => `url("${l[0]}")`).join(','),
-                    backgroundSize: weatherLayers.map((l) => `${l[1]}px ${l[1]}px`).join(','),
-                  },
-                })
-              : null,
+        m('.LogoManager-mockHeader', { style: { height: `${height}px` } }, [
+          weatherLayers.length
+            ? m('.LogoManager-mockWeather', {
+                style: {
+                  backgroundImage: weatherLayers.map((l) => `url("${l[0]}")`).join(','),
+                  backgroundSize: weatherLayers.map((l) => `${l[1]}px ${l[1]}px`).join(','),
+                },
+              })
+            : null,
+          m('.LogoManager-mockRow', { className: cfg.size.align === 'center' ? 'is-centred' : '' }, [
+            m('.LogoManager-mockNav', [m('span'), m('span'), m('span')]),
             m(
-              '.LogoManager-mockRow',
-              { className: cfg.size.align === 'center' ? 'is-centred' : '' },
+              '.LogoManager-mockLogo',
+              {
+                style: cfg.plate.enabled
+                  ? { background: cfg.plate.color, padding: `${cfg.plate.padding}px`, borderRadius: `${cfg.plate.radius}px` }
+                  : {},
+              },
               [
-                m('.LogoManager-mockNav', [m('span'), m('span'), m('span')]),
-                m(
-                  '.LogoManager-mockLogo',
-                  {
-                    style: cfg.plate.enabled
-                      ? { background: cfg.plate.color, padding: `${cfg.plate.padding}px`, borderRadius: `${cfg.plate.radius}px` }
-                      : {},
-                  },
-                  [
-                    logo
-                      ? m('img', {
-                          src: logo,
-                          alt: '',
-                          style: {
-                            height: `${cfg.size.height}px`,
-                            width: 'auto',
-                            display: 'block',
-                            visibility: recolor.enabled ? 'hidden' : 'visible',
-                            filter: filterChain(effects, cfg.shadow, 'lm-preview-pixelate'),
-                          },
-                        })
-                      : m('span.LogoManager-mockTitle', app.forum.attribute('title') as string),
-                    recolor.enabled && logo
-                      ? m('.LogoManager-mockRecolor', {
-                          style: {
-                            backgroundColor: recolor.color,
-                            maskImage: `url("${logo}")`,
-                            WebkitMaskImage: `url("${logo}")`,
-                          },
-                        })
-                      : null,
-                    decoration
-                      ? m('.LogoManager-mockDecoration', {
-                          style: {
-                            width: `${decorationSize}px`,
-                            height: `${decorationSize}px`,
-                            [vertical]: `-${decorationOffset}px`,
-                            [horizontal]: `-${decorationOffset}px`,
-                            backgroundImage: `url("${decoration}")`,
-                          },
-                        })
-                      : null,
-                  ]
-                ),
-                m('.LogoManager-mockControls', [m('span'), m('span.is-round')]),
+                logo
+                  ? m('img', {
+                      src: logo,
+                      alt: '',
+                      style: {
+                        height: `${cfg.size.height}px`,
+                        width: 'auto',
+                        display: 'block',
+                        visibility: recolor.enabled ? 'hidden' : 'visible',
+                        filter: filterChain(effects, cfg.shadow, 'lm-preview-pixelate'),
+                      },
+                    })
+                  : m('span.LogoManager-mockTitle', app.forum.attribute('title') as string),
+                recolor.enabled && logo
+                  ? m('.LogoManager-mockRecolor', {
+                      style: {
+                        backgroundColor: recolor.color,
+                        maskImage: `url("${logo}")`,
+                        WebkitMaskImage: `url("${logo}")`,
+                      },
+                    })
+                  : null,
+                decoration
+                  ? m('.LogoManager-mockDecoration', {
+                      style: {
+                        width: `${decorationSize}px`,
+                        height: `${decorationSize}px`,
+                        [vertical]: `-${decorationOffset}px`,
+                        [horizontal]: `-${decorationOffset}px`,
+                        backgroundImage: `url("${decoration}")`,
+                      },
+                    })
+                  : null,
               ]
             ),
-          ]
-        )
+            m('.LogoManager-mockControls', [m('span'), m('span.is-round')]),
+          ]),
+        ])
       ),
       m('.LogoManager-previewNote', t('preview_note')),
       this.pixelateFilter(effects.pixelate),
@@ -249,17 +241,13 @@ export default class LogoStudio extends Component<{ valueStream: (v?: string) =>
     return m(
       'svg.LogoManager-filters',
       { width: 0, height: 0, 'aria-hidden': 'true', focusable: 'false' },
-      m(
-        'filter',
-        { id: 'lm-preview-pixelate', x: 0, y: 0, width: '100%', height: '100%', 'color-interpolation-filters': 'sRGB' },
-        [
-          m('feFlood', { x: half, y: half, width: 2, height: 2 }),
-          m('feComposite', { width: block, height: block }),
-          m('feTile', { result: 'tiles' }),
-          m('feComposite', { in: 'SourceGraphic', in2: 'tiles', operator: 'in' }),
-          m('feMorphology', { operator: 'dilate', radius: half }),
-        ]
-      )
+      m('filter', { id: 'lm-preview-pixelate', x: 0, y: 0, width: '100%', height: '100%', 'color-interpolation-filters': 'sRGB' }, [
+        m('feFlood', { x: half, y: half, width: 2, height: 2 }),
+        m('feComposite', { width: block, height: block }),
+        m('feTile', { result: 'tiles' }),
+        m('feComposite', { in: 'SourceGraphic', in2: 'tiles', operator: 'in' }),
+        m('feMorphology', { operator: 'dilate', radius: half }),
+      ])
     );
   }
 
@@ -293,7 +281,10 @@ export default class LogoStudio extends Component<{ valueStream: (v?: string) =>
 
     return m('.LogoManager-slot', { className: variant === 'dark' ? 'is-dark' : '' }, [
       m('label.LogoManager-label', t(variant === 'dark' ? 'logo_dark' : 'logo_light')),
-      m('.LogoManager-slotPreview', busy ? m(LoadingIndicator, { size: 'small' }) : url ? m('img', { src: url, alt: '' }) : m('span.LogoManager-slotEmpty', t('no_logo'))),
+      m(
+        '.LogoManager-slotPreview',
+        busy ? m(LoadingIndicator, { size: 'small' }) : url ? m('img', { src: url, alt: '' }) : m('span.LogoManager-slotEmpty', t('no_logo'))
+      ),
       m('.LogoManager-slotActions', [
         m('label.Button.Button--primary.LogoManager-file', [
           t(url ? 'replace' : 'upload'),
@@ -512,7 +503,12 @@ export default class LogoStudio extends Component<{ valueStream: (v?: string) =>
           (v) => this.set('seasons.timezone', v),
           'seasons_timezone_help'
         ),
-        rules.length ? m('.LogoManager-seasonList', rules.map((rule, index) => this.seasonRow(rule, index))) : m('.LogoManager-empty', t('season_empty')),
+        rules.length
+          ? m(
+              '.LogoManager-seasonList',
+              rules.map((rule, index) => this.seasonRow(rule, index))
+            )
+          : m('.LogoManager-empty', t('season_empty')),
         m('.LogoManager-help', t('season_presets')),
         m(
           '.LogoManager-presets',
@@ -584,7 +580,11 @@ export default class LogoStudio extends Component<{ valueStream: (v?: string) =>
           active ? m('span.LogoManager-badge', t('season_active_now')) : null,
         ]),
         m('span.LogoManager-seasonWhen', this.describe(rule)),
-        m('button.LogoManager-iconButton', { type: 'button', title: String(t('season_delete')), onclick: () => this.deleteSeason(index) }, m('i.fas.fa-trash')),
+        m(
+          'button.LogoManager-iconButton',
+          { type: 'button', title: String(t('season_delete')), onclick: () => this.deleteSeason(index) },
+          m('i.fas.fa-trash')
+        ),
       ]
     );
   }
@@ -635,49 +635,74 @@ export default class LogoStudio extends Component<{ valueStream: (v?: string) =>
         ? m('.LogoManager-dates', [
             m('.LogoManager-row.LogoManager-row--inline', [
               m('label.LogoManager-label', t('season_from')),
-              m('input.FormControl[type=text][placeholder=MM-DD]', { value: rule.when.from || '', oninput: (e: Event) => setWhen('from', (e.target as HTMLInputElement).value) }),
+              m('input.FormControl[type=text][placeholder=MM-DD]', {
+                value: rule.when.from || '',
+                oninput: (e: Event) => setWhen('from', (e.target as HTMLInputElement).value),
+              }),
             ]),
             m('.LogoManager-row.LogoManager-row--inline', [
               m('label.LogoManager-label', t('season_to')),
-              m('input.FormControl[type=text][placeholder=MM-DD]', { value: rule.when.to || '', oninput: (e: Event) => setWhen('to', (e.target as HTMLInputElement).value) }),
+              m('input.FormControl[type=text][placeholder=MM-DD]', {
+                value: rule.when.to || '',
+                oninput: (e: Event) => setWhen('to', (e.target as HTMLInputElement).value),
+              }),
             ]),
           ])
         : [
-            select('season_feast', rule.when.feast || 'easter', FEASTS.map((f) => ({ value: f, label: t(`feast_${f}`) })), (v) => setWhen('feast', v)),
+            select(
+              'season_feast',
+              rule.when.feast || 'easter',
+              FEASTS.map((f) => ({ value: f, label: t(`feast_${f}`) })),
+              (v) => setWhen('feast', v)
+            ),
             slider('season_before', rule.when.before ?? 3, 0, 60, 'd', (v) => setWhen('before', v)),
             slider('season_after', rule.when.after ?? 1, 0, 60, 'd', (v) => setWhen('after', v)),
           ],
-      m('.LogoManager-row', [m('label.LogoManager-label', t('season_logo')), m('.LogoManager-help', t('season_logo_help')), this.uploadSlot(rule.id, 'light')]),
-      m('.LogoManager-row', [m('label.LogoManager-label', t('season_decoration')), m('.LogoManager-help', t('season_decoration_help')), artGrid(rule.decoration || null, DECORATIONS, art.decorations, 'decoration', (v) => set('decoration', v))]),
+      m('.LogoManager-row', [
+        m('label.LogoManager-label', t('season_logo')),
+        m('.LogoManager-help', t('season_logo_help')),
+        this.uploadSlot(rule.id, 'light'),
+      ]),
+      m('.LogoManager-row', [
+        m('label.LogoManager-label', t('season_decoration')),
+        m('.LogoManager-help', t('season_decoration_help')),
+        artGrid(rule.decoration || null, DECORATIONS, art.decorations, 'decoration', (v) => set('decoration', v)),
+      ]),
       rule.decoration
-        ? select('season_corner', rule.corner || 'top-right', CORNERS.map((c) => ({ value: c, label: t(`corner_${c}`) })), (v) => set('corner', v))
+        ? select(
+            'season_corner',
+            rule.corner || 'top-right',
+            CORNERS.map((c) => ({ value: c, label: t(`corner_${c}`) })),
+            (v) => set('corner', v)
+          )
         : null,
       rule.decoration ? slider('season_scale', rule.decorationScale ?? 55, 10, 200, '%', (v) => set('decorationScale', v)) : null,
       m('.LogoManager-row', [
         m('label.LogoManager-label', t('season_weather')),
         m('.LogoManager-help', t('season_weather_help')),
-        m(
-          '.LogoManager-weatherGrid',
-          [
-            m('button.LogoManager-weatherTile.LogoManager-art--none', { className: !rule.weather ? 'is-active' : '', type: 'button', onclick: () => set('weather', null) }, t('season_none')),
-            ...WEATHER.map((name) => {
-              const layers = art.weather[name] || [];
-              return m(
-                'button.LogoManager-weatherTile',
-                {
-                  className: rule.weather === name ? 'is-active' : '',
-                  type: 'button',
-                  onclick: () => set('weather', name),
-                  style: {
-                    backgroundImage: layers.map((l) => `url("${l[0]}")`).join(','),
-                    backgroundSize: layers.map((l) => `${l[1]}px ${l[1]}px`).join(','),
-                  },
+        m('.LogoManager-weatherGrid', [
+          m(
+            'button.LogoManager-weatherTile.LogoManager-art--none',
+            { className: !rule.weather ? 'is-active' : '', type: 'button', onclick: () => set('weather', null) },
+            t('season_none')
+          ),
+          ...WEATHER.map((name) => {
+            const layers = art.weather[name] || [];
+            return m(
+              'button.LogoManager-weatherTile',
+              {
+                className: rule.weather === name ? 'is-active' : '',
+                type: 'button',
+                onclick: () => set('weather', name),
+                style: {
+                  backgroundImage: layers.map((l) => `url("${l[0]}")`).join(','),
+                  backgroundSize: layers.map((l) => `${l[1]}px ${l[1]}px`).join(','),
                 },
-                m('span', t(`weather_${name}`))
-              );
-            }),
-          ]
-        ),
+              },
+              m('span', t(`weather_${name}`))
+            );
+          }),
+        ]),
       ]),
       rule.weather ? slider('season_density', rule.weatherDensity ?? 2, 1, 3, '', (v) => set('weatherDensity', v)) : null,
     ]);
