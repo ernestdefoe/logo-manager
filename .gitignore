@@ -1,2 +1,6 @@
 js/node_modules/
 .DS_Store
+/vendor
+/composer.lock
+.phpunit.result.cache
+/tests/integration/tmp

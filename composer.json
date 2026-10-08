@@ -1,6 +1,6 @@
 {
     "name": "ernestdefoe/logo-manager",
-    "description": "Everything Flarum's logo setting will not do \u2014 SVG uploads, real size control that grows the header with it, alignment, live effects (pixelate, recolour, glow), and a seasonal schedule that swaps the logo by itself.",
+    "description": "Everything Flarum's logo setting will not do — SVG uploads, real size control that grows the header with it, alignment, live effects (pixelate, recolour, glow), and a seasonal schedule that swaps the logo by itself.",
     "keywords": [
         "flarum",
         "flarum-extension",
@@ -34,6 +34,11 @@
             "Ernestdefoe\\LogoManager\\": "src/"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+            "Ernestdefoe\\LogoManager\\Tests\\": "tests/"
+        }
+    },
     "extra": {
         "flarum-extension": {
             "title": "Logo Manager",
@@ -54,6 +59,24 @@
     },
     "config": {
         "sort-packages": true
+    },
+    "require-dev": {
+        "flarum/phpstan": "^2.0",
+        "flarum/testing": "^2.0"
+    },
+    "scripts": {
+        "test": [
+            "@test:integration"
+        ],
+        "test:integration": "phpunit -c tests/phpunit.integration.xml",
+        "test:setup": "@php tests/integration/setup.php",
+        "analyse:phpstan": "phpstan analyse"
+    },
+    "scripts-descriptions": {
+        "test": "Runs all tests.",
+        "test:integration": "Runs all integration tests.",
+        "test:setup": "Sets up a database for use with integration tests. Execute this only once.",
+        "analyse:phpstan": "Run static analysis"
     },
     "minimum-stability": "beta",
     "prefer-stable": true
