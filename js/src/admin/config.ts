@@ -42,6 +42,8 @@ export type SeasonRule = {
   weatherDensity?: number;
   effects?: Partial<Effects> | null;
   recolor?: { enabled: boolean; color: string } | null;
+  email?: { file: string; size: string | null } | null;
+  favicon?: { icon: string; svg: string | null; png: string | null; ico: string | null; touch: string | null } | null;
 };
 
 export type Cfg = {

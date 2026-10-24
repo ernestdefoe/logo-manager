@@ -5,6 +5,7 @@ namespace Ernestdefoe\LogoManager\Logo;
 use Illuminate\Contracts\Filesystem\Cloud;
 use Illuminate\Contracts\Filesystem\Factory;
 use Intervention\Image\ImageManager;
+use Intervention\Image\Interfaces\ImageInterface;
 use Psr\Http\Message\UploadedFileInterface;
 use RuntimeException;
 
@@ -62,24 +63,124 @@ class LogoStore
      */
     public function put(string $scope, string $variant, UploadedFileInterface $file): string
     {
-        $bytes = $file->getStream()->getContents();
-        $size = strlen($bytes);
+        $bytes = (string) $file->getStream();
 
         // The sniffed type, never the one the browser claimed. A client can
         // say anything; `finfo` reads the file.
-        $type = (new \finfo(FILEINFO_MIME_TYPE))->buffer($bytes) ?: '';
-        $isSvg = $type === 'image/svg+xml' || $this->looksLikeSvg($bytes, $type);
+        [$contents, $extension] = $this->isSvg($bytes)
+            ? [$this->cleanSvg($bytes), 'svg']
+            : $this->prepareRaster($bytes);
 
-        [$contents, $extension] = $isSvg
-            ? [$this->prepareSvg($bytes, $size), 'svg']
-            : $this->prepareRaster($bytes, $size, $type);
-
-        $name = $this->prefix($scope, $variant).bin2hex(random_bytes(4)).'.'.$extension;
+        $name = $this->name($scope, $variant, '.'.$extension);
 
         $this->forget($scope, $variant);
         $this->disk->put($name, $contents);
 
         return $name;
+    }
+
+    /** A fresh filename in one slot: the slot's prefix, a random part, then `$suffix`. */
+    public function name(string $scope, string $variant, string $suffix, ?string $random = null): string
+    {
+        return $this->prefix($scope, $variant).($random ?? bin2hex(random_bytes(4))).$suffix;
+    }
+
+    public function write(string $name, string $contents): void
+    {
+        $this->disk->put($name, $contents);
+    }
+
+    public function read(string $path): ?string
+    {
+        return $this->disk->exists($path) ? (string) $this->disk->get($path) : null;
+    }
+
+    /** Whether some bytes are an SVG, by sniffing rather than by name. */
+    public function isSvg(string $bytes): bool
+    {
+        $type = (new \finfo(FILEINFO_MIME_TYPE))->buffer($bytes) ?: '';
+
+        return $type === 'image/svg+xml' || $this->looksLikeSvg($bytes, $type);
+    }
+
+    /**
+     * A cleaned SVG.
+     *
+     * @throws RuntimeException with a translation key
+     */
+    public function cleanSvg(string $bytes): string
+    {
+        if (strlen($bytes) > self::MAX_SVG_BYTES) {
+            throw new RuntimeException('too_large_svg');
+        }
+
+        return $this->svg->clean($bytes) ?? throw new RuntimeException('invalid_svg');
+    }
+
+    /**
+     * Decode a raster image after the same checks an upload gets: a type we
+     * accept, a size cap, and the pixel count read from the header before
+     * any decoder allocates a buffer for it.
+     *
+     * @throws RuntimeException with a translation key
+     */
+    public function decode(string $bytes, array $types = self::RASTER_TYPES): ImageInterface
+    {
+        $type = (new \finfo(FILEINFO_MIME_TYPE))->buffer($bytes) ?: '';
+
+        if (! in_array($type, $types, true)) {
+            throw new RuntimeException('unsupported_type');
+        }
+
+        if (strlen($bytes) > self::MAX_RASTER_BYTES) {
+            throw new RuntimeException('too_large_raster');
+        }
+
+        // Checked from the header, before anything decodes the image: a
+        // decoder allocates a buffer for width x height whatever the
+        // compressed file weighs, so a small file declaring vast dimensions
+        // is a way to exhaust memory.
+        $dimensions = @getimagesizefromstring($bytes);
+
+        if ($dimensions === false) {
+            throw new RuntimeException('invalid_image');
+        }
+
+        if ($dimensions[0] * $dimensions[1] > self::MAX_RESOLUTION) {
+            throw new RuntimeException('too_many_pixels');
+        }
+
+        return $this->images->read($bytes);
+    }
+
+    /**
+     * The PNG the admin's browser drew from an SVG, for the places an SVG
+     * cannot go (mail clients, `.ico`, the iOS home screen).
+     *
+     * 🚨 Untrusted bytes like any upload: it must sniff as PNG and pass the
+     * same pixel checks, and it is decoded and re-encoded rather than stored.
+     */
+    public function clientRaster(?UploadedFileInterface $file): ?ImageInterface
+    {
+        if (! $file instanceof UploadedFileInterface || $file->getError() !== UPLOAD_ERR_OK) {
+            return null;
+        }
+
+        try {
+            return $this->decode((string) $file->getStream(), ['image/png']);
+        } catch (RuntimeException) {
+            return null;
+        }
+    }
+
+    /** Remove every file whose name starts with one slot's prefix. */
+    public function forgetPrefix(string $prefix): void
+    {
+        foreach ($this->disk->files() as $file) {
+            if (str_starts_with(basename($file), $prefix)) {
+                $this->disk->delete($file);
+            }
+        }
     }
 
     /**
@@ -100,47 +201,10 @@ class LogoStore
         return (bool) preg_match('/<svg[\s>]/i', substr($bytes, 0, 4096));
     }
 
-    protected function prepareSvg(string $bytes, int $size): string
-    {
-        if ($size > self::MAX_SVG_BYTES) {
-            throw new RuntimeException('too_large_svg');
-        }
-
-        $clean = $this->svg->clean($bytes);
-
-        if ($clean === null) {
-            throw new RuntimeException('invalid_svg');
-        }
-
-        return $clean;
-    }
-
     /** @return array{0:string,1:string} the encoded bytes and the extension. */
-    protected function prepareRaster(string $bytes, int $size, string $type): array
+    protected function prepareRaster(string $bytes): array
     {
-        if (! in_array($type, self::RASTER_TYPES, true)) {
-            throw new RuntimeException('unsupported_type');
-        }
-
-        if ($size > self::MAX_RASTER_BYTES) {
-            throw new RuntimeException('too_large_raster');
-        }
-
-        // Checked from the header, before anything decodes the image: a
-        // decoder allocates a buffer for width x height whatever the
-        // compressed file weighs, so a small file declaring vast dimensions
-        // is a way to exhaust memory.
-        $dimensions = @getimagesizefromstring($bytes);
-
-        if ($dimensions === false) {
-            throw new RuntimeException('invalid_image');
-        }
-
-        if ($dimensions[0] * $dimensions[1] > self::MAX_RESOLUTION) {
-            throw new RuntimeException('too_many_pixels');
-        }
-
-        $image = $this->images->read($bytes)->scaleDown(height: self::MAX_RASTER_HEIGHT);
+        $image = $this->decode($bytes)->scaleDown(height: self::MAX_RASTER_HEIGHT);
 
         // An animated logo stays a GIF. Re-encoding it to WebP the way core
         // does is fine for a still, but it is the only format here that can
@@ -160,13 +224,7 @@ class LogoStore
      */
     public function forget(string $scope, string $variant): void
     {
-        $prefix = $this->prefix($scope, $variant);
-
-        foreach ($this->disk->files() as $file) {
-            if (str_starts_with(basename($file), $prefix)) {
-                $this->disk->delete($file);
-            }
-        }
+        $this->forgetPrefix($this->prefix($scope, $variant));
     }
 
     public function delete(?string $path): void
@@ -196,10 +254,10 @@ class LogoStore
      * re-uploading one season's logo would delete the other's. The separator
      * is doing real work.
      */
-    protected function prefix(string $scope, string $variant): string
+    public function prefix(string $scope, string $variant): string
     {
         $scope = preg_replace('/[^a-z0-9-]/', '', strtolower($scope)) ?: 'base';
-        $variant = $variant === 'dark' ? 'dark' : 'light';
+        $variant = in_array($variant, ['dark', 'email', 'favicon'], true) ? $variant : 'light';
 
         return "logo-manager-$scope.$variant-";
     }

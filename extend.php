@@ -11,11 +11,15 @@
  * rather than after a script has run.
  */
 
+use Ernestdefoe\LogoManager\Api\Controller\BackupController;
 use Ernestdefoe\LogoManager\Api\Controller\DeleteLogoController;
+use Ernestdefoe\LogoManager\Api\Controller\FaviconController;
+use Ernestdefoe\LogoManager\Api\Controller\ReportController;
 use Ernestdefoe\LogoManager\Api\Controller\UploadLogoController;
 use Ernestdefoe\LogoManager\Config;
 use Ernestdefoe\LogoManager\Content\AdminArtPayload;
 use Ernestdefoe\LogoManager\Content\InjectLogoStyles;
+use Ernestdefoe\LogoManager\Provider;
 use Flarum\Extend;
 
 return [
@@ -26,6 +30,8 @@ return [
     // is only honest if the real thing is styled the same way beside it.
     (new Extend\Frontend('admin'))
         ->js(__DIR__.'/js/dist/admin.js')
+        // The Favicon, Report and Backup tabs, fetched only when opened.
+        ->jsDirectory(__DIR__.'/js/dist/admin')
         ->css(__DIR__.'/less/admin.less')
         ->content(InjectLogoStyles::class)
         ->content(AdminArtPayload::class),
@@ -39,5 +45,13 @@ return [
 
     (new Extend\Routes('api'))
         ->post('/logo-manager/logos/{scope}/{variant}', 'logo-manager.upload', UploadLogoController::class)
-        ->delete('/logo-manager/logos/{scope}/{variant}', 'logo-manager.delete', DeleteLogoController::class),
+        ->delete('/logo-manager/logos/{scope}/{variant}', 'logo-manager.delete', DeleteLogoController::class)
+        ->post('/logo-manager/favicons/{scope}', 'logo-manager.favicon', FaviconController::class)
+        ->delete('/logo-manager/favicons/{scope}', 'logo-manager.favicon.delete', FaviconController::class)
+        ->get('/logo-manager/report', 'logo-manager.report', ReportController::class)
+        ->get('/logo-manager/backup', 'logo-manager.export', BackupController::class)
+        ->post('/logo-manager/backup', 'logo-manager.import', BackupController::class),
+
+    (new Extend\ServiceProvider())
+        ->register(Provider::class),
 ];

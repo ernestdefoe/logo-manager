@@ -4,11 +4,14 @@ namespace Ernestdefoe\LogoManager\Content;
 
 use Ernestdefoe\LogoManager\Config;
 use Ernestdefoe\LogoManager\Logo\Dimensions;
+use Ernestdefoe\LogoManager\Logo\Favicons;
 use Ernestdefoe\LogoManager\Logo\LogoStore;
 use Ernestdefoe\LogoManager\Season\Schedule;
 use Ernestdefoe\LogoManager\Season\Season;
 use Ernestdefoe\LogoManager\Style\StyleSheet;
 use Flarum\Frontend\Document;
+use Flarum\Http\RequestUtil;
+use Flarum\Locale\TranslatorInterface;
 use Flarum\Settings\SettingsRepositoryInterface;
 use Illuminate\Support\Arr;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -26,12 +29,17 @@ use Psr\Http\Message\ServerRequestInterface as Request;
  */
 class InjectLogoStyles
 {
+    /** The query parameter an administrator previews a season with. */
+    public const PREVIEW = 'logo-manager-preview';
+
     public function __construct(
         protected Config $config,
         protected Schedule $schedule,
         protected LogoStore $store,
         protected SettingsRepositoryInterface $settings,
         protected Dimensions $dimensions,
+        protected Favicons $favicons,
+        protected TranslatorInterface $translator,
     ) {
     }
 
@@ -41,7 +49,8 @@ class InjectLogoStyles
             return;
         }
 
-        $season = $this->schedule->active();
+        $preview = $this->preview($request);
+        $season = $preview === false ? $this->schedule->active() : $preview;
 
         $lightPath = $this->resolve($season, 'light');
         $darkPath = $this->resolve($season, 'dark');
@@ -69,6 +78,60 @@ class InjectLogoStyles
         if (($block = $sheet->pixelate()) > 0) {
             $document->foot[] = $this->pixelateFilter($block);
         }
+
+        // Core's Meta content has already put its one `<link>` under this
+        // key; replacing the key keeps a single favicon declaration.
+        $favicon = $season?->favicon() ?? $this->config->favicon();
+
+        if ($favicon !== null && ($links = $this->favicons->links($favicon)) !== null) {
+            $document->head['favicon'] = $links;
+        }
+
+        if ($preview !== false) {
+            $document->foot[] = $this->previewBanner($request, $preview);
+        }
+    }
+
+    /**
+     * The season an administrator asked to preview, `null` for the permanent
+     * look, or `false` when this is not a preview.
+     *
+     * Only an administrator can preview: anyone else adding the parameter
+     * gets the forum as it is. Nothing is stored — the preview is this one
+     * page view, which is also why it needs no way to be switched off.
+     */
+    protected function preview(Request $request): Season|null|false
+    {
+        $id = $request->getQueryParams()[self::PREVIEW] ?? null;
+
+        if (! is_string($id) || ! RequestUtil::getActor($request)->isAdmin()) {
+            return false;
+        }
+
+        return $id === 'none' ? null : ($this->schedule->find($id) ?? false);
+    }
+
+    /** A pinned notice that this page is a preview, with the way out of it. */
+    protected function previewBanner(Request $request, ?Season $season): string
+    {
+        $query = $request->getQueryParams();
+        unset($query[self::PREVIEW]);
+        $exit = (string) $request->getUri()->withQuery(http_build_query($query));
+
+        $text = $season === null
+            ? $this->translator->trans('ernestdefoe-logo-manager.views.preview_permanent')
+            : $this->translator->trans('ernestdefoe-logo-manager.views.preview_season', ['season' => $season->name()]);
+
+        // Pinned just under the header bar, so it neither covers the phone
+        // menu button nor fights a cookie notice or install prompt for the
+        // bottom of the screen.
+        return '<style>#logo-manager-preview{position:fixed;z-index:2147483647;left:0;right:0;margin:0 auto;width:fit-content;'
+            .'top:calc(var(--header-height,52px) + 10px);max-width:calc(100% - 32px);display:flex;gap:12px;align-items:center;'
+            .'padding:10px 16px;border-radius:999px;background:#111827;color:#fff;font:600 13px/1.3 system-ui,sans-serif;'
+            .'box-shadow:0 6px 24px rgba(0,0,0,.3)}#logo-manager-preview a{color:#93c5fd;white-space:nowrap}'
+            .'@media (max-width:767.98px){#logo-manager-preview{top:calc(var(--header-height-phone,46px) + 10px)}}</style>'
+            .'<div id="logo-manager-preview" role="status"><span>'.e($text).'</span>'
+            .'<a href="'.e($exit).'">'.e($this->translator->trans('ernestdefoe-logo-manager.views.preview_exit')).'</a></div>';
     }
 
     /**

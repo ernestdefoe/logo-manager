@@ -88,6 +88,24 @@ class Season
         return $this->config->filename($this->rule['logo'][$variant] ?? null);
     }
 
+    public function name(): string
+    {
+        $name = $this->rule['name'] ?? '';
+
+        return is_string($name) && trim($name) !== '' ? trim($name) : $this->id();
+    }
+
+    /** @return array{file:string,size:?string}|null */
+    public function email(): ?array
+    {
+        return $this->config->emailLogo($this->rule['email'] ?? null);
+    }
+
+    public function favicon(): ?array
+    {
+        return $this->config->faviconSet($this->rule['favicon'] ?? null);
+    }
+
     public function decoration(): ?string
     {
         $value = $this->rule['decoration'] ?? null;

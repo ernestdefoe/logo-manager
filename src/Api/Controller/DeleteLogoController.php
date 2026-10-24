@@ -48,6 +48,10 @@ class DeleteLogoController implements RequestHandlerInterface
 
         $this->store->forget($scope, $variant);
 
+        if ($scope !== 'base' && $variant === 'light') {
+            $this->store->forget($scope, 'email');
+        }
+
         return new JsonResponse(['deleted' => true]);
     }
 }

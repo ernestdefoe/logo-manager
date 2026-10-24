@@ -32,7 +32,18 @@ type Art = {
   activeSeason: string | null;
 };
 
-const TABS = ['logo', 'size', 'effects', 'seasons'] as const;
+const TABS = ['logo', 'size', 'effects', 'seasons', 'favicon', 'report', 'backup'] as const;
+
+/**
+ * Panels that are fetched only when they are opened. The four original tabs
+ * are the studio itself; these are occasional tools, and most visits to the
+ * admin never open them.
+ */
+const LAZY: Record<string, () => Promise<any>> = {
+  favicon: () => import('./FaviconPanel'),
+  report: () => import('./ReportPanel'),
+  backup: () => import('./BackupPanel'),
+};
 
 /**
  * The Logo Studio.
@@ -53,6 +64,10 @@ export default class LogoStudio extends Component<{ valueStream: (v?: string) =>
   /** Logo URLs held locally so an upload shows immediately, before a save. */
   urls: Record<string, string | null> = {};
 
+  /** The health report, fetched each time the studio opens. */
+  report: any = null;
+  panels: Record<string, any> = {};
+
   oninit(vnode: any) {
     super.oninit(vnode);
     this.value = this.attrs.valueStream;
@@ -67,6 +82,36 @@ export default class LogoStudio extends Component<{ valueStream: (v?: string) =>
     this.cfg = normalise(parsed);
     this.urls['base.light'] = (app.forum.attribute('logoUrl') as string) || null;
     this.urls['base.dark'] = (app.forum.attribute('logoDarkModeUrl') as string) || null;
+
+    this.loadReport();
+  }
+
+  loadReport() {
+    this.report = null;
+    app
+      .request<any>({ method: 'GET', url: `${app.forum.attribute('apiUrl')}/logo-manager/report` })
+      .then((report) => (this.report = report))
+      .catch(() => (this.report = { items: [], now: null, next: null, seasons: 0, checkedAt: new Date().toISOString() }))
+      .finally(() => m.redraw());
+  }
+
+  /** Render a lazy panel, fetching its chunk the first time it is asked for. */
+  lazy(name: string, attrs: Record<string, any> = {}) {
+    const panel = this.panels[name];
+
+    if (panel === undefined) {
+      this.panels[name] = null;
+      LAZY[name]().then((module) => {
+        this.panels[name] = module.default;
+        m.redraw();
+      });
+    }
+
+    return panel ? m(panel, { ...attrs, studio: this }) : m(LoadingIndicator, { size: 'small' });
+  }
+
+  problems(): number {
+    return (this.report?.items || []).filter((item: any) => item.level !== 'info').length;
   }
 
   art(): Art {
@@ -87,17 +132,24 @@ export default class LogoStudio extends Component<{ valueStream: (v?: string) =>
   }
 
   view() {
+    const problems = this.problems();
+
     return m('.LogoManager', [
       this.error ? m('.LogoManager-error.Alert.Alert--error', this.error) : null,
+      problems && this.tab !== 'report'
+        ? m('button.LogoManager-health', { type: 'button', onclick: () => (this.tab = 'report') }, [
+            m('i.fas.fa-triangle-exclamation'),
+            t('report_summary', { count: problems }),
+          ])
+        : null,
       this.preview(),
       m(
         '.LogoManager-tabs',
         TABS.map((tab) =>
-          m(
-            'button.LogoManager-tab',
-            { className: this.tab === tab ? 'is-active' : '', type: 'button', onclick: () => (this.tab = tab) },
-            t(`tab_${tab}`)
-          )
+          m('button.LogoManager-tab', { className: this.tab === tab ? 'is-active' : '', type: 'button', onclick: () => (this.tab = tab) }, [
+            t(`tab_${tab}`),
+            tab === 'report' && problems ? m('span.LogoManager-count', problems) : null,
+          ])
         )
       ),
       m('.LogoManager-panel', this.panel()),
@@ -112,6 +164,11 @@ export default class LogoStudio extends Component<{ valueStream: (v?: string) =>
         return this.effectsPanel();
       case 'seasons':
         return this.seasonsPanel();
+      case 'favicon':
+        return this.lazy('favicon', { scope: 'base' });
+      case 'report':
+      case 'backup':
+        return this.lazy(this.tab);
       default:
         return this.logoPanel();
     }
@@ -299,7 +356,7 @@ export default class LogoStudio extends Component<{ valueStream: (v?: string) =>
     ]);
   }
 
-  upload(scope: string, variant: 'light' | 'dark', file: File | null) {
+  async upload(scope: string, variant: 'light' | 'dark', file: File | null) {
     if (!file) return;
 
     const key = `${scope}.${variant}`;
@@ -309,8 +366,16 @@ export default class LogoStudio extends Component<{ valueStream: (v?: string) =>
     this.uploading = key;
     this.error = null;
 
+    // Mail clients show no SVG, so an SVG logo is also drawn to a PNG here,
+    // in the browser, for the email copy.
+    if (variant === 'light' && (file.type === 'image/svg+xml' || /\.svg$/i.test(file.name))) {
+      const { rasterise } = await import('./rasterise');
+      const png = await rasterise(file, 240);
+      if (png) body.append('raster', png, 'logo.png');
+    }
+
     app
-      .request<{ filename: string; url: string }>({
+      .request<{ filename: string; url: string; email: { file: string; size: string } | null }>({
         method: 'POST',
         url: `${app.forum.attribute('apiUrl')}/logo-manager/logos/${scope}/${variant}`,
         serialize: (raw: any) => raw,
@@ -327,6 +392,7 @@ export default class LogoStudio extends Component<{ valueStream: (v?: string) =>
           const rule = this.cfg.seasons.rules.find((r) => r.id === scope);
           if (rule) {
             rule.logo = { ...(rule.logo || {}), [variant]: response.filename };
+            if (variant === 'light') rule.email = response.email;
             this.commit();
           }
         }
@@ -353,6 +419,7 @@ export default class LogoStudio extends Component<{ valueStream: (v?: string) =>
           const rule = this.cfg.seasons.rules.find((r) => r.id === scope);
           if (rule) {
             rule.logo = { ...(rule.logo || {}), [variant]: null };
+            if (variant === 'light') rule.email = null;
             this.commit();
           }
         }
@@ -581,6 +648,16 @@ export default class LogoStudio extends Component<{ valueStream: (v?: string) =>
         ]),
         m('span.LogoManager-seasonWhen', this.describe(rule)),
         m(
+          'a.LogoManager-iconButton',
+          {
+            href: `${app.forum.attribute('baseUrl')}/?logo-manager-preview=${encodeURIComponent(rule.id)}`,
+            target: '_blank',
+            rel: 'noopener',
+            title: String(t('season_preview')),
+          },
+          m('i.fas.fa-eye')
+        ),
+        m(
           'button.LogoManager-iconButton',
           { type: 'button', title: String(t('season_delete')), onclick: () => this.deleteSeason(index) },
           m('i.fas.fa-trash')
@@ -662,7 +739,9 @@ export default class LogoStudio extends Component<{ valueStream: (v?: string) =>
         m('label.LogoManager-label', t('season_logo')),
         m('.LogoManager-help', t('season_logo_help')),
         this.uploadSlot(rule.id, 'light'),
+        rule.logo?.light ? m('.LogoManager-help', t(rule.email ? 'season_email_on' : 'season_email_off')) : null,
       ]),
+      this.lazy('favicon', { scope: rule.id, rule }),
       m('.LogoManager-row', [
         m('label.LogoManager-label', t('season_decoration')),
         m('.LogoManager-help', t('season_decoration_help')),

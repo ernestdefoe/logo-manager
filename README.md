@@ -140,6 +140,42 @@ reorder, and the first match wins:
 Anything not on that list is a date range away: the schedule does not need to
 know what a holiday is called.
 
+**Emails**
+- Mail clients show neither SVG nor WebP. An SVG logo is drawn to a PNG in your
+  browser as you upload it, and that PNG becomes the logo in every email.
+- A season's logo goes into emails too while the season runs. A dedicated email
+  logo set in Flarum's own Email settings still takes priority.
+
+**Favicon**
+- Upload an SVG, ICO, PNG, JPEG, WebP or GIF. From one file you get an `.ico`
+  (16, 32 and 48px), a 180px home-screen icon for iPhones, and — for an SVG —
+  the SVG itself for browsers that draw one, with the others as fallbacks.
+- It is written to Flarum's own favicon setting, so link previews and anything
+  else that reads it keep working. Each season can have its own favicon.
+
+**Report**
+- Opens with the studio: files that are missing or no longer readable, emails
+  going out with no logo, seasons with no valid dates or that can never win
+  because a season above them always does, and what changes next — flagged as
+  an error if the next season has a broken file.
+
+**Preview on the forum**
+- The eye on each season opens the forum as that season, with a banner saying
+  so. Only administrators can do this; for everybody else the link is the
+  ordinary forum. It shows the saved settings.
+
+**Backup**
+- Export the whole setup — settings, seasons and every file they use — as one
+  JSON file, and import it on another forum. Made for building a look on a
+  local copy and moving it to the live forum in one step. Every file in an
+  import is checked and re-encoded exactly as an upload would be, and a bad
+  file means nothing is changed.
+
+What it deliberately does not do: page banners (that is what
+[Hero Builder](https://github.com/ernestdefoe/hero-builder) is for)
+and `og:image` (an SEO extension such as fof/seo already owns that tag, and two
+of them disagree).
+
 ## Installation
 
 ```bash
@@ -167,7 +203,15 @@ remote references removed as well — a logo has no business fetching anything,
 and a logo that phones home on every page view is both a privacy leak and a way
 for its contents to change later without you knowing.
 
-Uploads are admin-only and capped at 512 KB for SVG, 8 MB for raster. Raster
+Favicons go through the same sanitiser. The PNGs your browser draws from an
+SVG — for emails, the `.ico` and the home-screen icon — are untrusted like any
+upload: they must be PNG, are measured before decoding, and are re-encoded on
+the server. The server never renders SVG itself: the GD library Flarum uses
+cannot, and ImageMagick's SVG delegates are a known attack surface. An `.ico`
+is kept as sent only if its directory is well formed.
+
+Uploads are admin-only and capped at 512 KB for SVG, 256 KB for ICO, 8 MB for
+raster. Raster
 dimensions are read from the file header **before** anything decodes the image,
 so a small file declaring enormous dimensions cannot exhaust memory.
 
@@ -191,6 +235,12 @@ with `!important`.
 Ornaments are anchored to the logo's image box, so a tightly cropped logo gives
 the neatest result — a logo with a lot of transparent padding will show its
 ornament out at the edge of that padding.
+
+Weather never changes the header's `position`: core's own `absolute` /
+`fixed` is already a containing block for the particles, and restating it was
+what made the header stretch for a moment while the page loaded (fixed in
+1.0.4). A resized logo also reserves its width from the file's own ratio, so
+nothing beside it moves when the image arrives.
 
 Weather animation is disabled under `prefers-reduced-motion: reduce`. The
 particles stay; they just stop moving.

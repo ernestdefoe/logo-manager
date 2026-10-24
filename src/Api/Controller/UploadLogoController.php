@@ -66,20 +66,39 @@ class UploadLogoController implements RequestHandlerInterface
             throw new ValidationException(['logo' => $this->error($e->getMessage())]);
         }
 
+        // For an SVG, the admin's browser also sends the PNG it drew from
+        // it: the only form of the logo a mail client will show.
+        $raster = str_ends_with($filename, '.svg')
+            ? $this->store->clientRaster(Arr::get($request->getUploadedFiles(), 'raster'))
+            : null;
+        $email = null;
+
         if ($scope === 'base') {
             $key = self::SETTING[$variant];
             $this->store->delete($this->settings->get($key));
             $this->settings->set($key, $filename);
 
             if ($variant === 'light') {
-                $this->emailCopy->refresh($file, $filename);
+                $this->emailCopy->refresh($file, $filename, $raster);
             }
+        } elseif ($variant === 'light') {
+            $email = $this->emailCopy->season($scope, $raster ?? $this->decodeQuietly((string) $file->getStream()));
         }
 
         return new JsonResponse([
             'filename' => $filename,
             'url' => $this->store->url($filename),
+            'email' => $email,
         ]);
+    }
+
+    protected function decodeQuietly(string $bytes): ?\Intervention\Image\Interfaces\ImageInterface
+    {
+        try {
+            return $this->store->decode($bytes);
+        } catch (RuntimeException) {
+            return null;
+        }
     }
 
     /**

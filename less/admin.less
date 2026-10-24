@@ -214,6 +214,7 @@
 
 .LogoManager-tabs {
   display: flex;
+  flex-wrap: wrap;
   gap: 2px;
   border-bottom: 1px solid var(--control-bg);
   margin-bottom: var(--lm-gap);
@@ -677,6 +678,11 @@
     color: var(--control-danger-bg, #d92b2b);
     background: var(--control-bg);
   }
+
+  // The preview link is not destructive, so it does not turn red.
+  &[href]:hover {
+    color: var(--primary-color);
+  }
 }
 
 .LogoManager-editor {
@@ -700,4 +706,148 @@
   border: 1px dashed var(--control-bg);
   border-radius: var(--lm-radius);
   margin-bottom: 14px;
+}
+
+// ------------------------------------------------------- report + favicon
+
+.LogoManager-health {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-bottom: 12px;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: var(--lm-radius);
+  background: var(--alert-bg, #fff2ae);
+  color: var(--alert-color, #ad6c00);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.LogoManager-count {
+  display: inline-block;
+  min-width: 18px;
+  margin-left: 6px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--control-danger-bg, #d92b2b);
+  color: #fff;
+  font-size: 11px;
+  line-height: 18px;
+  text-align: center;
+}
+
+.LogoManager-reportHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+
+  .LogoManager-sectionTitle {
+    margin: 0;
+  }
+}
+
+.LogoManager-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.LogoManager-card {
+  border: 1px solid var(--control-bg);
+  border-radius: var(--lm-radius);
+  padding: 12px 14px;
+}
+
+.LogoManager-cardLabel {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted-color);
+}
+
+.LogoManager-cardValue {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 4px 0 2px;
+}
+
+.LogoManager-reportItems {
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 0;
+}
+
+.LogoManager-reportItem {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  padding: 9px 12px;
+  margin-bottom: 6px;
+  border-radius: 8px;
+  font-size: 13px;
+  background: var(--control-bg);
+
+  &.is-error .icon {
+    color: var(--control-danger-bg, #d92b2b);
+  }
+  &.is-warning .icon {
+    color: #d97706;
+  }
+  &.is-info .icon {
+    color: var(--primary-color);
+  }
+  &.is-ok .icon {
+    color: var(--control-success-bg, #2e9e4f);
+  }
+}
+
+.LogoManager-faviconRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+}
+
+.LogoManager-faviconSizes {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  min-height: 64px;
+  padding: 10px 14px;
+  border-radius: var(--lm-radius);
+  background: var(--control-bg);
+
+  img {
+    display: block;
+    object-fit: contain;
+  }
+}
+
+.LogoManager-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.LogoManager-chip {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 20px;
+  background: var(--control-bg);
+  color: var(--control-color);
+}
+
+.LogoManager-warn {
+  color: #b45309;
 }

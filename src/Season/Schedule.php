@@ -42,6 +42,39 @@ class Schedule
         return null;
     }
 
+    /** A rule by id, enabled or not — for previewing one before it runs. */
+    public function find(string $id): ?Season
+    {
+        foreach ($this->config->seasonRules() as $rule) {
+            $season = new Season($rule, $this->config);
+
+            if ($season->id() === $id) {
+                return $season;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Which season wins on each of the next `$days` days, starting today.
+     *
+     * @return array<string, ?Season> keyed by Y-m-d
+     */
+    public function upcoming(int $days, ?DateTimeImmutable $from = null): array
+    {
+        $tz = new DateTimeZone($this->config->timezone());
+        $day = ($from ?? new DateTimeImmutable('now', $tz))->setTimezone($tz)->setTime(12, 0);
+        $out = [];
+
+        for ($i = 0; $i < $days; $i++) {
+            $out[$day->format('Y-m-d')] = $this->active($day);
+            $day = $day->modify('+1 day');
+        }
+
+        return $out;
+    }
+
     protected function matches(Season $season, DateTimeImmutable $now, DateTimeZone $tz): bool
     {
         return match ($season->whenType()) {

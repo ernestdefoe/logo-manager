@@ -32,6 +32,9 @@ class Config
      */
     public const ENABLED = 'ernestdefoe-logo-manager.enabled';
 
+    /** The permanent favicon set, beside core's own `favicon_path`. */
+    public const FAVICON = 'ernestdefoe-logo-manager.favicon';
+
     public const ALIGNMENTS = ['left', 'center'];
 
     public const HOVERS = ['none', 'lift', 'grow', 'glow', 'spin', 'wobble'];
@@ -175,6 +178,48 @@ class Config
     public function logo(string $variant): ?string
     {
         return $this->filename($this->data['logos'][$variant] ?? null);
+    }
+
+    /**
+     * The permanent favicon set — but only while core's `favicon_path` still
+     * points at its primary file. Uploading through core's own Appearance
+     * page afterwards replaces the favicon there, and that upload wins.
+     */
+    public function favicon(): ?array
+    {
+        $set = $this->faviconSet(json_decode((string) $this->settings->get(self::FAVICON), true));
+
+        return $set !== null && $set['icon'] === $this->settings->get('favicon_path') ? $set : null;
+    }
+
+    /** @return array{icon:string,svg:?string,png:?string,ico:?string,touch:?string}|null */
+    public function faviconSet(mixed $value): ?array
+    {
+        if (! is_array($value)) {
+            return null;
+        }
+
+        $set = [];
+
+        foreach (['icon', 'svg', 'png', 'ico', 'touch'] as $key) {
+            $set[$key] = $this->filename($value[$key] ?? null);
+        }
+
+        return $set['icon'] === null ? null : $set;
+    }
+
+    /** @return array{file:string,size:?string}|null an email-safe logo and its "WxH". */
+    public function emailLogo(mixed $value): ?array
+    {
+        $file = is_array($value) ? $this->filename($value['file'] ?? null) : null;
+
+        if ($file === null) {
+            return null;
+        }
+
+        $size = $value['size'] ?? null;
+
+        return ['file' => $file, 'size' => is_string($size) && preg_match('/^\d{1,5}x\d{1,5}$/', $size) ? $size : null];
     }
 
     public function seasonsEnabled(): bool
