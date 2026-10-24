@@ -153,16 +153,22 @@ know what a holiday is called.
 - It is written to Flarum's own favicon setting, so link previews and anything
   else that reads it keep working. Each season can have its own favicon.
 
+![The Favicon tab, with the formats made from one SVG](https://raw.githubusercontent.com/ernestdefoe/logo-manager/main/images/studio-favicon.png)
+
 **Report**
 - Opens with the studio: files that are missing or no longer readable, emails
   going out with no logo, seasons with no valid dates or that can never win
   because a season above them always does, and what changes next — flagged as
   an error if the next season has a broken file.
 
+![The Report tab](https://raw.githubusercontent.com/ernestdefoe/logo-manager/main/images/studio-report.png)
+
 **Preview on the forum**
 - The eye on each season opens the forum as that season, with a banner saying
   so. Only administrators can do this; for everybody else the link is the
   ordinary forum. It shows the saved settings.
+
+![The forum previewing the Halloween season](https://raw.githubusercontent.com/ernestdefoe/logo-manager/main/images/forum-preview.png)
 
 **Backup**
 - Export the whole setup — settings, seasons and every file they use — as one
