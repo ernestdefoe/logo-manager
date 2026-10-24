@@ -32,6 +32,8 @@ class StyleSheet
         protected ?Season $season = null,
         protected ?string $lightUrl = null,
         protected ?string $darkUrl = null,
+        protected ?array $lightSize = null,
+        protected ?array $darkSize = null,
     ) {
     }
 
@@ -127,7 +129,8 @@ class StyleSheet
         // string is read as a complex-expression interpolation, not a brace
         // followed by a variable.
         $css = "$scope .Header-logo{height:{$height}px;width:auto;max-height:none;max-width:100%;object-fit:contain}"
-            .'@media (max-width:'.self::PHONE_BREAKPOINT.'){'.$scope." .Header-logo{height:{$phone}px}}";
+            .'@media (max-width:'.self::PHONE_BREAKPOINT.'){'.$scope." .Header-logo{height:{$phone}px}}"
+            .$this->aspect($scope);
 
         if (! $resized) {
             return $css;
@@ -157,6 +160,30 @@ class StyleSheet
         return ":root:root{--header-height:{$header}px}"
             .$css
             ."@media (min-width:768px){.App .App-header{height:{$header}px;min-height:{$header}px}}";
+    }
+
+    /**
+     * Reserve the logo's width before its file arrives.
+     *
+     * The height is fixed above, but `width:auto` is zero until the image
+     * has loaded, so the navigation and any ornament pinned to the logo's
+     * corner slid sideways once it did. With the file's own ratio the box is
+     * the right size in the first paint. The `auto` hands back to the file's
+     * own ratio once it has loaded, so a stale ratio can never distort it.
+     */
+    protected function aspect(string $scope): string
+    {
+        $css = '';
+
+        if ($this->lightSize !== null) {
+            $css .= "$scope .Header-logo{aspect-ratio:auto {$this->lightSize[0]}/{$this->lightSize[1]}}";
+        }
+
+        if ($this->darkSize !== null) {
+            $css .= "$scope .Header-logo--dark-mode{aspect-ratio:auto {$this->darkSize[0]}/{$this->darkSize[1]}}";
+        }
+
+        return $css;
     }
 
     /** Whether the logo actually in use is an SVG. */
@@ -415,8 +442,16 @@ class StyleSheet
         // weather over a menu. The phone's actual header bar is
         // `.App-navigation`, which is the strip that stays on screen, so the
         // particles go there instead.
-        return '.App-header,.App-navigation{position:relative}'
-            ."@media (min-width:768px){.App-header::before{{$layer}}}"
+        //
+        // 🚨 Neither bar is given a `position`. Core already makes both of
+        // them `absolute` before the forum boots and `fixed` once `.affix`
+        // lands, and either one is a containing block for the particles.
+        // Restating `position:relative` here (1.0.3 and earlier) beat core's
+        // `absolute` until the script added `.affix`, so for the first frames
+        // the header sat in flow on top of `.App`'s own padding and pushed
+        // the page down by a whole header height, then snapped back — the
+        // "header stretches while the page loads" report, CLS 0.057.
+        return "@media (min-width:768px){.App-header::before{{$layer}}}"
             .'@media (max-width:'.self::PHONE_BREAKPOINT."){.App-navigation::before{{$layer}}}"
             .'@keyframes lm-weather{from{background-position:'.implode(',', $from).'}'
             .'to{background-position:'.implode(',', $to).'}}'

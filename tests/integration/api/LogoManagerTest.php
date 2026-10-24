@@ -279,4 +279,35 @@ class LogoManagerTest extends TestCase
         $this->assertStringEndsWith('/assets/', $art['assets']);
         $this->assertNull($art['activeSeason']);
     }
+
+    #[Test]
+    public function weather_never_takes_the_header_out_of_cores_positioning()
+    {
+        $this->app()->getContainer()->make(\Flarum\Settings\SettingsRepositoryInterface::class)->set(Config::KEY, json_encode([
+            'seasons' => ['enabled' => true, 'rules' => [[
+                'id' => 'always', 'enabled' => true,
+                'when' => ['type' => 'range', 'from' => '01-01', 'to' => '12-31'],
+                'weather' => 'snow',
+            ]]],
+        ]));
+
+        preg_match('#<style id="logo-manager">(.*?)</style>#s', $this->page(), $m);
+
+        $this->assertStringContainsString('lm-weather', $m[1]);
+        // Core positions both bars `absolute` until the forum boots and adds
+        // `.affix`; a `position` here put the header in flow for those first
+        // frames and pushed the whole page down by its height.
+        $this->assertDoesNotMatchRegularExpression('/\.App-(?:header|navigation)\{[^}]*position:/', $m[1]);
+    }
+
+    #[Test]
+    public function a_resized_logo_reserves_its_width_before_the_file_loads()
+    {
+        $this->upload('base', 'light', 1, $this->file($this->png(80, 20)));
+        $this->app()->getContainer()->make(\Flarum\Settings\SettingsRepositoryInterface::class)->set(Config::KEY, json_encode(['size' => ['height' => 60]]));
+
+        preg_match('#<style id="logo-manager">(.*?)</style>#s', $this->page(), $m);
+
+        $this->assertStringContainsString('aspect-ratio:auto 80/20', $m[1]);
+    }
 }

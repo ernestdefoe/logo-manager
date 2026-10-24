@@ -3,6 +3,7 @@
 namespace Ernestdefoe\LogoManager\Content;
 
 use Ernestdefoe\LogoManager\Config;
+use Ernestdefoe\LogoManager\Logo\Dimensions;
 use Ernestdefoe\LogoManager\Logo\LogoStore;
 use Ernestdefoe\LogoManager\Season\Schedule;
 use Ernestdefoe\LogoManager\Season\Season;
@@ -30,6 +31,7 @@ class InjectLogoStyles
         protected Schedule $schedule,
         protected LogoStore $store,
         protected SettingsRepositoryInterface $settings,
+        protected Dimensions $dimensions,
     ) {
     }
 
@@ -41,14 +43,23 @@ class InjectLogoStyles
 
         $season = $this->schedule->active();
 
-        $light = $this->resolve($season, 'light');
-        $dark = $this->resolve($season, 'dark');
+        $lightPath = $this->resolve($season, 'light');
+        $darkPath = $this->resolve($season, 'dark');
+        $light = $lightPath === null ? null : $this->store->url($lightPath);
+        $dark = $darkPath === null ? null : $this->store->url($darkPath);
 
         if ($season !== null && $season->logo('light') !== null) {
             $this->swapLogo($document, $light, $dark);
         }
 
-        $sheet = new StyleSheet($this->config, $season, $light, $dark);
+        $sheet = new StyleSheet(
+            $this->config,
+            $season,
+            $light,
+            $dark,
+            $this->dimensions->of($lightPath),
+            $darkPath === $lightPath ? null : $this->dimensions->of($darkPath),
+        );
         $css = $sheet->build();
 
         if ($css !== '') {
@@ -61,7 +72,7 @@ class InjectLogoStyles
     }
 
     /**
-     * The URL of the logo actually in use for one variant.
+     * The stored filename of the logo actually in use for one variant.
      *
      * A season that supplies only a light logo takes over the dark one too.
      * The alternative is a forum showing this year's Christmas logo in light
@@ -74,14 +85,14 @@ class InjectLogoStyles
             $file = $season->logo($variant) ?? ($variant === 'dark' ? $season->logo('light') : null);
 
             if ($file !== null && $this->store->exists($file)) {
-                return $this->store->url($file);
+                return $file;
             }
         }
 
         $key = $variant === 'dark' ? 'logo_dark_mode_path' : 'logo_path';
         $path = $this->config->filename($this->settings->get($key));
 
-        return $path !== null && $this->store->exists($path) ? $this->store->url($path) : null;
+        return $path !== null && $this->store->exists($path) ? $path : null;
     }
 
     /**
