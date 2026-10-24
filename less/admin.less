@@ -797,6 +797,15 @@
   border-radius: 8px;
   font-size: 13px;
   background: var(--control-bg);
+  flex-wrap: wrap;
+
+  > span {
+    flex: 1 1 240px;
+  }
+  > .Button {
+    align-self: center;
+    margin-left: auto;
+  }
 
   &.is-error .icon {
     color: var(--control-danger-bg, #d92b2b);

@@ -154,14 +154,25 @@ ernestdefoe-logo-manager:
     report_slot_logo_dark: dark-mode logo
     report_slot_email: email logo
     report_slot_favicon: favicon
-    report_missing_file: "The {slot} for {where} is missing from the server ({file}). Upload it again."
-    report_broken_file: "The {slot} for {where} cannot be read as an image ({file}). Upload it again."
+    report_missing_file: "The {slot} for {where} is missing from the server. {fix}"
+    report_broken_file: "The {slot} for {where} cannot be read as an image. {fix}"
+    report_fix_logo: "To fix it, upload the logo again in Logo Manager → Logo."
+    report_fix_seasons: "To fix it, upload that season's logo again in Logo Manager → Seasons."
+    report_fix_favicon: "To fix it, upload the favicon again in Logo Manager → Favicon."
+    report_email_settings_missing_file: "The email logo uploaded on Flarum's Appearance page is missing from the server, so emails show a broken image. Upload it again under Email logo on the Appearance page, or remove it there to use your Logo Manager logo in emails."
+    report_email_settings_broken_file: "The email logo uploaded on Flarum's Appearance page cannot be read as an image. Upload it again under Email logo on the Appearance page, or remove it there to use your Logo Manager logo in emails."
     report_never_runs: "{season} has no valid dates, so it never runs."
     report_shadowed: "{season} will not show in the next twelve months: a season above it in the list always wins on its dates."
     report_upcoming: "{season} starts {date} ({days, plural, =0 {today} one {tomorrow} other {in # days}})."
     report_upcoming_broken: "{season} starts {date} with a problem below — fix it before then."
     report_ending_soon: "The permanent look comes back on {date}, when {season} ends."
-    report_email_no_logo: Your logo is an SVG or WebP and there is no email copy of it, so emails go out without a logo. Upload the logo again, or set an email logo in Email settings.
+    report_email_no_logo: "Your logo is a WebP image and has no email copy, so emails go out without a logo. Upload the logo again in Logo Manager → Logo, or add one under Email logo on Flarum's Appearance page."
+    report_email_svg_no_copy: "Your logo is an SVG and has no PNG copy for emails, which cannot show SVG — so emails go out without a logo. Make the copy with the button, or add one under Email logo on Flarum's Appearance page."
+    report_email_svg_missing: "The email logo for {where} is missing from the server. Its logo is an SVG, so make the email copy again with the button."
+    report_email_uses_settings: "Emails use the logo uploaded under Email logo on Flarum's Appearance page. Logo Manager's own email copies are not used while it is set."
+    report_email_remade: "The email copy of the logo for {where} had gone missing from the server. It has been made again from the logo, so there is nothing to do."
+    report_make_copy: Make the email copy
+    report_made_copy: Email copy made.
     report_disabled: Logo Manager is switched off, so none of this is showing on the forum.
     report_seasons_off: Seasons are switched off, so the schedule is not running.
 
@@ -246,6 +257,7 @@ ernestdefoe-logo-manager:
       too_large_svg: That SVG is larger than 512 KB. An SVG logo is normally a few kilobytes — a very large one usually has an image embedded in it.
       too_large_raster: That image is larger than 8 MB.
       too_many_pixels: That image has too many pixels to process safely.
+      not_svg: That logo is no longer an SVG. Check the report again.
 
   # Rendered on the server only, so not shipped in either frontend's bundle.
   views:

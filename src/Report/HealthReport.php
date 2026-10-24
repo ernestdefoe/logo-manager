@@ -5,10 +5,12 @@ namespace Ernestdefoe\LogoManager\Report;
 use DateTimeImmutable;
 use Ernestdefoe\LogoManager\Config;
 use Ernestdefoe\LogoManager\Logo\Dimensions;
+use Ernestdefoe\LogoManager\Logo\EmailCopy;
 use Ernestdefoe\LogoManager\Logo\Favicons;
 use Ernestdefoe\LogoManager\Logo\LogoStore;
 use Ernestdefoe\LogoManager\Season\Schedule;
 use Ernestdefoe\LogoManager\Season\Season;
+use Flarum\Mail\EmailLogo;
 use Flarum\Settings\SettingsRepositoryInterface;
 
 /**
@@ -26,6 +28,9 @@ class HealthReport
     /** How far ahead a season change is called out. */
     public const SOON = 14;
 
+    /** Core's own email logo, uploaded in Flarum's Email settings. */
+    protected const DEDICATED = 'email_logo_path';
+
     protected array $items = [];
 
     public function __construct(
@@ -34,6 +39,7 @@ class HealthReport
         protected LogoStore $store,
         protected Dimensions $dimensions,
         protected SettingsRepositoryInterface $settings,
+        protected EmailCopy $emailCopy,
     ) {
     }
 
@@ -41,14 +47,15 @@ class HealthReport
     {
         $this->items = [];
 
+        // Repairs first, so what follows describes the forum as it now is.
+        $healed = $this->emailCopy->heal();
+
         if (! $this->config->enabled()) {
             $this->add('info', 'disabled');
         }
 
         $this->file($this->settings->get('logo_path'), 'logo_light');
         $this->file($this->settings->get('logo_dark_mode_path'), 'logo_dark');
-        $this->file($this->settings->get('email_logo_path'), 'email');
-        $this->file($this->settings->get('logo_email_copy_path'), 'email');
         $this->file($this->settings->get('favicon_path'), 'favicon');
 
         foreach ($this->config->favicon() ?? [] as $key => $file) {
@@ -57,9 +64,8 @@ class HealthReport
             }
         }
 
-        $this->email();
-
         $rules = array_map(fn ($rule) => new Season($rule, $this->config), $this->config->seasonRules());
+        $this->email($rules, $healed);
         $problems = [];
 
         foreach ($rules as $season) {
@@ -98,7 +104,10 @@ class HealthReport
 
         $this->file($season->logo('light'), 'logo_light', $params);
         $this->file($season->logo('dark'), 'logo_dark', $params);
-        $this->file($season->email()['file'] ?? null, 'email', $params);
+        // Not read by emails while Email settings has a logo of its own.
+        if (! $this->settings->get(self::DEDICATED)) {
+            $this->seasonEmail($season, $params);
+        }
 
         foreach (array_unique(array_filter($season->favicon() ?? [])) as $file) {
             $this->file($file, 'favicon', $params);
@@ -160,50 +169,109 @@ class HealthReport
     }
 
     /**
-     * Mail clients show neither SVG nor WebP, and core only falls back to the
-     * header logo itself when it is neither — so this combination means
-     * every email goes out with no logo at all.
+     * The logo emails actually carry, in core's order: the logo uploaded in
+     * Flarum's own Email settings, then the copy of the forum logo, then the
+     * forum logo itself if a mail client can show it.
+     *
+     * 🚨 Only the first of those that is set is used, so only it is checked.
+     * A copy behind an uploaded email logo is never mailed, and calling it
+     * missing sent people to upload a file that was not the problem.
+     *
+     * @param Season[] $rules
+     * @param string[] $healed
      */
-    protected function email(): void
+    protected function email(array $rules, array $healed): void
     {
-        $logo = (string) $this->settings->get('logo_path');
-
-        if ($logo === ''
-            || $this->settings->get('email_logo_path')
-            || $this->settings->get('logo_email_copy_path')) {
+        if (! class_exists(EmailLogo::class)) {
             return;
         }
 
-        if (preg_match('/\.(svg|webp)$/i', $logo)) {
-            $this->add('warning', 'email_no_logo');
+        if ($this->settings->get(self::DEDICATED)) {
+            $problem = $this->problem((string) $this->settings->get(self::DEDICATED));
+            $this->add($problem ? 'error' : 'info', $problem ? 'email_settings_'.$problem : 'email_uses_settings');
+
+            return;
         }
+
+        foreach ($rules as $season) {
+            if (in_array($season->id(), $healed, true)) {
+                $this->add('info', 'email_remade', ['season' => $season->name()]);
+            }
+        }
+
+        if (in_array('base', $healed, true)) {
+            $this->add('info', 'email_remade');
+        }
+
+        $logo = (string) $this->settings->get('logo_path');
+        $copy = (string) $this->settings->get(EmailLogo::COPY_PATH_KEY);
+
+        if ($copy !== '') {
+            $this->file($copy, 'email');
+
+            return;
+        }
+
+        if ($logo === '' || ! preg_match('/\.(svg|webp)$/i', $logo)) {
+            return;
+        }
+
+        $svg = str_ends_with(strtolower($logo), '.svg') ? $this->store->read($logo) : null;
+
+        $this->add('warning', $svg !== null ? 'email_svg_no_copy' : 'email_no_logo', [], $svg !== null ? ['scope' => 'base', 'svg' => $svg] : null);
+    }
+
+    protected function seasonEmail(Season $season, array $params): void
+    {
+        $email = $season->email()['file'] ?? null;
+
+        if (! $email || $this->store->exists($email)) {
+            $this->file($email, 'email', $params);
+
+            return;
+        }
+
+        // Still missing after heal(): an SVG logo, which only a browser can draw.
+        $logo = $season->logo('light');
+        $svg = $logo && str_ends_with(strtolower($logo), '.svg') ? $this->store->read($logo) : null;
+
+        $this->add('error', $svg !== null ? 'email_svg_missing' : 'missing_file', $params + ['slot' => 'email', 'fix' => 'seasons'], $svg !== null ? ['scope' => $season->id(), 'svg' => $svg] : null);
     }
 
     protected function file(?string $path, string $slot, array $params = []): void
     {
-        if ($path === null || $path === '') {
-            return;
-        }
-
-        $params += ['slot' => $slot, 'file' => $path];
-
-        if ($this->config->filename($path) === null) {
-            $this->add('error', 'missing_file', $params);
-
-            return;
-        }
-
-        $bytes = $this->store->read($path);
-
-        if ($bytes === null) {
-            $this->add('error', 'missing_file', $params);
-        } elseif (! Favicons::isIco($bytes) && $this->dimensions->fromBytes($path, $bytes) === null) {
-            $this->add('error', 'broken_file', $params);
+        if ($path !== null && $path !== '' && ($problem = $this->problem($path))) {
+            // No filename: nobody recognises `logo-email-tg4hjgki.png`, and the
+            // message says where to go instead.
+            $this->add('error', $problem, $params + ['slot' => $slot, 'fix' => $this->fix($slot, $params)]);
         }
     }
 
-    protected function add(string $level, string $key, array $params = []): void
+    /** @return 'missing_file'|'broken_file'|null */
+    protected function problem(string $path): ?string
     {
-        $this->items[] = ['level' => $level, 'key' => $key, 'params' => $params];
+        $bytes = $this->config->filename($path) === null ? null : $this->store->read($path);
+
+        if ($bytes === null) {
+            return 'missing_file';
+        }
+
+        return ! Favicons::isIco($bytes) && $this->dimensions->fromBytes($path, $bytes) === null ? 'broken_file' : null;
+    }
+
+    /** Where the administrator goes to put it right. */
+    protected function fix(string $slot, array $params): string
+    {
+        return match (true) {
+            isset($params['season']) => 'seasons',
+            $slot === 'favicon' => 'favicon',
+            default => 'logo',
+        };
+    }
+
+    /** @param array{scope:string,svg:string}|null $action the Report's "Make the email copy" button */
+    protected function add(string $level, string $key, array $params = [], ?array $action = null): void
+    {
+        $this->items[] = ['level' => $level, 'key' => $key, 'params' => $params] + ($action ? ['action' => $action] : []);
     }
 }

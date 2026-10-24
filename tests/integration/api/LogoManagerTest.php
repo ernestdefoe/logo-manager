@@ -310,4 +310,24 @@ class LogoManagerTest extends TestCase
 
         $this->assertStringContainsString('aspect-ratio:auto 80/20', $m[1]);
     }
+
+    #[Test]
+    public function the_ornament_is_pinned_to_the_logo_image_not_its_link()
+    {
+        $this->app()->getContainer()->make(\Flarum\Settings\SettingsRepositoryInterface::class)->set(Config::KEY, json_encode([
+            'seasons' => ['enabled' => true, 'rules' => [[
+                'id' => 'always', 'enabled' => true,
+                'when' => ['type' => 'range', 'from' => '01-01', 'to' => '12-31'],
+                'decoration' => 'pumpkin', 'corner' => 'bottom-left', 'decorationScale' => 50,
+            ]]],
+        ]));
+
+        preg_match('#<style id="logo-manager">(.*?)</style>#s', $this->page(), $m);
+
+        // A theme can make the link wider than the image (Bespoke's drawer),
+        // so where anchors exist the ornament is placed and sized off the image.
+        $this->assertStringContainsString('.Header-logo{anchor-name:--lm-logo}', $m[1]);
+        $this->assertStringContainsString('width:calc(anchor-size(height) * 0.5)', $m[1]);
+        $this->assertStringContainsString('bottom:anchor(bottom);left:anchor(left);translate:-30% 30%', $m[1]);
+    }
 }

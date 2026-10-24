@@ -143,8 +143,8 @@ know what a holiday is called.
 **Emails**
 - Mail clients show neither SVG nor WebP. An SVG logo is drawn to a PNG in your
   browser as you upload it, and that PNG becomes the logo in every email.
-- A season's logo goes into emails too while the season runs. A dedicated email
-  logo set in Flarum's own Email settings still takes priority.
+- A season's logo goes into emails too while the season runs. An email logo
+  uploaded under **Email logo** on Flarum's Appearance page still takes priority.
 
 **Favicon**
 - Upload an SVG, ICO, PNG, JPEG, WebP or GIF. From one file you get an `.ico`
@@ -160,6 +160,9 @@ know what a holiday is called.
   going out with no logo, seasons with no valid dates or that can never win
   because a season above them always does, and what changes next — flagged as
   an error if the next season has a broken file.
+- It checks the email logo that is actually sent. If an email copy has gone
+  missing from the server it is made again from the logo; for an SVG logo the
+  Report has a **Make the email copy** button.
 
 ![The Report tab](https://raw.githubusercontent.com/ernestdefoe/logo-manager/main/images/studio-report.png)
 

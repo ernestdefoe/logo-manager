@@ -19,6 +19,40 @@ const ICONS: Record<string, string> = {
  * opens; this only words it.
  */
 export default class ReportPanel extends Component<{ studio: any }> {
+  making: string | null = null;
+
+  /**
+   * The server can't draw an SVG, so the browser draws the one the report
+   * sent — the same as at upload — and the server re-encodes the PNG.
+   */
+  async makeCopy(action: { scope: string; svg: string }) {
+    this.making = action.scope;
+
+    try {
+      const { rasterise } = await import('./rasterise');
+      const png = await rasterise(new File([action.svg], 'logo.svg', { type: 'image/svg+xml' }), 240);
+
+      if (!png) throw new Error('rasterise');
+
+      const body = new FormData();
+      body.append('raster', png, 'logo.png');
+
+      await app.request({
+        method: 'POST',
+        url: `${app.forum.attribute('apiUrl')}/logo-manager/email-copy/${encodeURIComponent(action.scope)}`,
+        serialize: (raw: any) => raw,
+        body,
+      });
+
+      app.alerts.show({ type: 'success' }, t('report_made_copy'));
+    } catch (e: any) {
+      if (!e?.response) app.alerts.show({ type: 'error' }, app.translator.trans('ernestdefoe-logo-manager.lib.errors.invalid_image'));
+    } finally {
+      this.making = null;
+      this.attrs.studio.loadReport();
+    }
+  }
+
   view() {
     const report = this.attrs.studio.report;
 
@@ -42,7 +76,16 @@ export default class ReportPanel extends Component<{ studio: any }> {
         ? m(
             'ul.LogoManager-reportItems',
             report.items.map((item: any) =>
-              m(`li.LogoManager-reportItem.is-${item.level}`, [m('i.icon', { className: ICONS[item.level] }), m('span', this.message(item))])
+              m(`li.LogoManager-reportItem.is-${item.level}`, [
+                m('i.icon', { className: ICONS[item.level] }),
+                m('span', this.message(item)),
+                item.action
+                  ? Button.component(
+                      { className: 'Button Button--primary', loading: this.making === item.action.scope, onclick: () => this.makeCopy(item.action) },
+                      t('report_make_copy')
+                    )
+                  : null,
+              ])
             )
           )
         : m('.LogoManager-reportItem.is-ok', [m('i.icon.fas.fa-circle-check'), m('span', t('report_ok'))]),
@@ -65,6 +108,7 @@ export default class ReportPanel extends Component<{ studio: any }> {
       ...p,
       date: p.date ? this.date(p.date) : undefined,
       slot: p.slot ? t(`report_slot_${p.slot}`) : undefined,
+      fix: p.fix ? t(`report_fix_${p.fix}`) : undefined,
       where: p.season ? t('report_where_season', { season: p.season }) : t('report_where_permanent'),
     });
   }

@@ -329,7 +329,11 @@ class StyleSheet
         $css = '.App-header .Header-logo{visibility:hidden}'
             .".App-header .Header-title>a::after{content:'';position:absolute;inset:{$pad}px;pointer-events:none;"
             ."background-color:{$recolor['color']};"
-            ."-webkit-mask:$light center/contain no-repeat;mask:$light center/contain no-repeat}";
+            ."-webkit-mask:$light center/contain no-repeat;mask:$light center/contain no-repeat}"
+            // Laid over the image itself where anchors exist, for the same
+            // reason as the ornament: a theme's anchor can be wider than it.
+            .'@supports (anchor-name:--a){'.self::ANCHOR
+            .'.App-header .Header-title>a::after{position-anchor:--lm-logo;inset:anchor(top) anchor(right) anchor(bottom) anchor(left)}}';
 
         if ($this->darkUrl !== null) {
             $dark = $this->cssUrl($this->darkUrl);
@@ -339,6 +343,9 @@ class StyleSheet
 
         return $css;
     }
+
+    /** Names the logo image as the anchor the overlays are pinned to. */
+    protected const ANCHOR = '.App-header .Header-title>a{anchor-scope:--lm-logo}.App-header .Header-title>a .Header-logo{anchor-name:--lm-logo}';
 
     /** The seasonal ornament, pinned to a corner of the logo. */
     protected function decoration(): string
@@ -359,10 +366,25 @@ class StyleSheet
         $offset = (int) round($size * 0.3);
         [$vertical, $horizontal] = explode('-', $this->season->corner());
 
+        $scale = round($this->season->decorationScale() / 100, 3);
+        $shift = ($horizontal === 'left' ? '-30%' : '30%').' '.($vertical === 'top' ? '-30%' : '30%');
+
+        // The fallback pins it to the anchor's box, from the size setting.
+        //
+        // 🚨 Where anchor positioning exists, it is pinned to the IMAGE and
+        // sized from the image as drawn. A theme can make the anchor wider
+        // than the logo (Bespoke's drawer: a 250px link round a 219px logo,
+        // so the ornament floated 20px past the end), and can draw the logo
+        // bigger than the setting says (Bespoke: 56px against 30px). The
+        // `translate` is 30% of the ornament's own size, as the offset is.
         return ".App-header .Header-title>a::before{content:'';position:absolute;z-index:2;pointer-events:none;"
             ."width:{$size}px;height:{$size}px;"
             ."$vertical:-{$offset}px;$horizontal:-{$offset}px;"
-            .'background:'.$this->cssUrl($uri).' center/contain no-repeat}';
+            .'background:'.$this->cssUrl($uri).' center/contain no-repeat}'
+            .'@supports (anchor-name:--a){'.self::ANCHOR
+            .'.App-header .Header-title>a::before{position-anchor:--lm-logo;'
+            ."width:calc(anchor-size(height) * $scale);height:calc(anchor-size(height) * $scale);"
+            ."$vertical:anchor($vertical);$horizontal:anchor($horizontal);translate:$shift}}";
     }
 
     protected function hover(): string

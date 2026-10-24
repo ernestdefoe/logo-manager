@@ -13,6 +13,7 @@
 
 use Ernestdefoe\LogoManager\Api\Controller\BackupController;
 use Ernestdefoe\LogoManager\Api\Controller\DeleteLogoController;
+use Ernestdefoe\LogoManager\Api\Controller\EmailCopyController;
 use Ernestdefoe\LogoManager\Api\Controller\FaviconController;
 use Ernestdefoe\LogoManager\Api\Controller\ReportController;
 use Ernestdefoe\LogoManager\Api\Controller\UploadLogoController;
@@ -49,6 +50,7 @@ return [
         ->post('/logo-manager/favicons/{scope}', 'logo-manager.favicon', FaviconController::class)
         ->delete('/logo-manager/favicons/{scope}', 'logo-manager.favicon.delete', FaviconController::class)
         ->get('/logo-manager/report', 'logo-manager.report', ReportController::class)
+        ->post('/logo-manager/email-copy/{scope}', 'logo-manager.email-copy', EmailCopyController::class)
         ->get('/logo-manager/backup', 'logo-manager.export', BackupController::class)
         ->post('/logo-manager/backup', 'logo-manager.import', BackupController::class),
 
