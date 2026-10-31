@@ -157,9 +157,12 @@ class StyleSheet
         // header a height at all. On a phone it lives inside the slide-out
         // drawer and is sized by its contents; pinning it there would clip
         // the drawer's own header block.
+        // The row inside goes with it: a custom header that pads itself out
+        // with `.App-header .container{min-height:92px}` would otherwise keep
+        // a 92px row in a 70px header and push the logo out of the bottom.
         return ":root:root{--header-height:{$header}px}"
             .$css
-            ."@media (min-width:768px){.App .App-header{height:{$header}px;min-height:{$header}px}}";
+            ."@media (min-width:768px){.App .App-header{height:{$header}px;min-height:{$header}px}.App .App-header .container{min-height:0}}";
     }
 
     /**
@@ -238,7 +241,16 @@ class StyleSheet
         // core's block image ignores, so the logo slid right of where core
         // puts it. `fit-content` keeps the box exactly the logo's size for
         // the plate and the overlays positioned against it.
-        $anchor = '.App-header .Header-title>a{position:relative;display:flex;align-items:center;width:fit-content;max-width:100%';
+        //
+        // 🚨 A block anchor also means anything another extension adds after
+        // it in the title (Festoon's inline-block bat on `::after`) wraps to
+        // a second line, and the twice-as-tall title is centred in the row,
+        // lifting the logo out of the top of the header. Laying the title
+        // out as a row keeps such additions beside the logo. Tablet-up only:
+        // in the phone drawer the title is a centred block, and core's logo
+        // already puts anything after it on its own line there.
+        $anchor = '@media (min-width:768px){.App-header .Header-title{display:flex;align-items:center}}'
+            .'.App-header .Header-title>a{position:relative;display:flex;align-items:center;width:fit-content;max-width:100%';
 
         if (! $plate['enabled']) {
             return $anchor.'}';
