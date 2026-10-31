@@ -42,7 +42,7 @@
     "extra": {
         "flarum-extension": {
             "title": "Logo Manager",
-            "category": "theme",
+            "category": "feature",
             "icon": {
                 "name": "fas fa-image",
                 "backgroundColor": "#4f46e5",
