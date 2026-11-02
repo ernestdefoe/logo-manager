@@ -32,6 +32,7 @@ class DeleteLogoController implements RequestHandlerInterface
     {
         RequestUtil::getActor($request)->assertAdmin();
 
+        // Route parameters: RouteHandlerFactory merges them into the query params.
         $scope = strtolower((string) Arr::get($request->getQueryParams(), 'scope', 'base'));
         $scope = preg_match('/^[a-z0-9-]{1,40}$/', $scope) ? $scope : 'base';
         $variant = Arr::get($request->getQueryParams(), 'variant') === 'dark' ? 'dark' : 'light';

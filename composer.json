@@ -27,7 +27,8 @@
     "require": {
         "php": "^8.3",
         "enshrined/svg-sanitize": "^1.0",
-        "flarum/core": "^2.0"
+        "flarum/core": "^2.0",
+        "intervention/image": "^3.2"
     },
     "autoload": {
         "psr-4": {

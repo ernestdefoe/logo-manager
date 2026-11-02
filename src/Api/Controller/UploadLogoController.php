@@ -105,6 +105,10 @@ class UploadLogoController implements RequestHandlerInterface
      * 🚨 Both parts come from the ROUTE and are filtered to the shape a slot
      * can have. They end up in a filename, so a value that could carry a
      * slash or a `..` would be choosing where on the disk to write.
+     *
+     * Reading them from the query params is correct: Flarum's
+     * RouteHandlerFactory merges the route parameters into the query params
+     * (route values win) before the handler runs.
      */
     protected function scope(ServerRequestInterface $request): string
     {
