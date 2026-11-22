@@ -134,14 +134,14 @@ class Decorations
     {
         $defs = match ($name) {
             'snow' => [
-                [130, 4, 1, fn (int $t) => self::dots('#ffffff', 0.90, $t, [[18, 22, 2.2], [70, 58, 1.7], [44, 90, 2.0], [92, 34, 1.4]])],
-                [175, 2, -1, fn (int $t) => self::dots('#ffffff', 0.65, $t, [[34, 40, 1.9], [86, 16, 1.5], [58, 76, 2.1]])],
-                [230, 1, 1, fn (int $t) => self::dots('#ffffff', 0.45, $t, [[62, 28, 1.7], [16, 68, 1.4], [90, 88, 1.9]])],
+                [130, 4, 1, fn (int $t) => self::dots('#a9c9e8', 0.90, $t, [[18, 22, 2.2], [70, 58, 1.7], [44, 90, 2.0], [92, 34, 1.4]], edge: '#7d9cbf')],
+                [175, 2, -1, fn (int $t) => self::dots('#a9c9e8', 0.75, $t, [[34, 40, 1.9], [86, 16, 1.5], [58, 76, 2.1]], edge: '#7d9cbf')],
+                [230, 1, 1, fn (int $t) => self::dots('#a9c9e8', 0.60, $t, [[62, 28, 1.7], [16, 68, 1.4], [90, 88, 1.9]], edge: '#7d9cbf')],
             ],
             'rain' => [
-                [90, 3, 1, fn (int $t) => self::strokes('#a8c8ff', 0.55, $t, [[20, 18, 15, 12], [64, 52, 15, 12], [40, 84, 15, 12]], 1.3)],
-                [130, 3, 1, fn (int $t) => self::strokes('#cfe2ff', 0.35, $t, [[52, 26, 19, 14], [14, 70, 19, 14]], 1.5)],
-                [64, 4, 1, fn (int $t) => self::strokes('#8fb4f5', 0.30, $t, [[36, 40, 11, 10], [78, 78, 11, 10]], 1.1)],
+                [90, 3, 1, fn (int $t) => self::strokes('#8fb4f5', 0.70, $t, [[20, 18, 15, 12], [64, 52, 15, 12], [40, 84, 15, 12]], 1.3)],
+                [130, 3, 1, fn (int $t) => self::strokes('#a3c2f2', 0.55, $t, [[52, 26, 19, 14], [14, 70, 19, 14]], 1.5)],
+                [64, 4, 1, fn (int $t) => self::strokes('#7aa2e0', 0.50, $t, [[36, 40, 11, 10], [78, 78, 11, 10]], 1.1)],
             ],
             'embers' => [
                 [150, -2, 1, fn (int $t) => self::dots('#ff8a3d', 0.85, $t, [[26, 34, 2.0], [78, 72, 1.6], [50, 96, 2.2]])],
@@ -149,14 +149,14 @@ class Decorations
                 [240, -1, 1, fn (int $t) => self::dots('#ff5d3d', 0.45, $t, [[88, 48, 1.5], [34, 68, 1.8]])],
             ],
             'bubbles' => [
-                [150, -2, 1, fn (int $t) => self::rings('#ffffff', 0.50, $t, [[26, 34, 11], [80, 78, 8]])],
-                [200, -1, -1, fn (int $t) => self::rings('#dff1ff', 0.40, $t, [[64, 24, 14], [20, 84, 9]])],
-                [250, -1, 1, fn (int $t) => self::rings('#ffffff', 0.30, $t, [[88, 52, 8], [40, 70, 12]])],
+                [150, -2, 1, fn (int $t) => self::rings('#ffffff', 0.60, $t, [[26, 34, 11], [80, 78, 8]], edge: '#5f86b0')],
+                [200, -1, -1, fn (int $t) => self::rings('#dff1ff', 0.50, $t, [[64, 24, 14], [20, 84, 9]], edge: '#5f86b0')],
+                [250, -1, 1, fn (int $t) => self::rings('#ffffff', 0.45, $t, [[88, 52, 8], [40, 70, 12]], edge: '#5f86b0')],
             ],
             'sparkles' => [
-                [120, 2, 1, fn (int $t) => self::shapes('spark', '#ffe9a8', 0.95, $t, [[24, 30, 11, 0], [76, 70, 8, 20]])],
-                [170, 1, -1, fn (int $t) => self::shapes('spark', '#fff6d6', 0.75, $t, [[62, 22, 9, 10], [18, 76, 12, -15]])],
-                [215, 1, 1, fn (int $t) => self::shapes('spark', '#ffd166', 0.55, $t, [[86, 54, 10, 30], [36, 84, 7, 0]])],
+                [120, 2, 1, fn (int $t) => self::shapes('spark', '#ffe9a8', 0.95, $t, [[24, 30, 11, 0], [76, 70, 8, 20]], edge: '#b07d12')],
+                [170, 1, -1, fn (int $t) => self::shapes('spark', '#fff6d6', 0.80, $t, [[62, 22, 9, 10], [18, 76, 12, -15]], edge: '#b07d12')],
+                [215, 1, 1, fn (int $t) => self::shapes('spark', '#ffd166', 0.70, $t, [[86, 54, 10, 30], [36, 84, 7, 0]], edge: '#b07d12')],
             ],
             'leaves' => [
                 [140, 2, 1, fn (int $t) => self::shapes('leaf', '#e2761b', 0.95, $t, [[22, 28, 12, 25], [74, 72, 10, -40]])],
@@ -164,9 +164,9 @@ class Decorations
                 [240, 1, -1, fn (int $t) => self::shapes('leaf', '#f0a336', 0.7, $t, [[84, 50, 12, 130], [38, 86, 9, 10]])],
             ],
             'petals' => [
-                [130, 2, 1, fn (int $t) => self::shapes('petal', '#ffb3c9', 0.95, $t, [[24, 30, 12, -25], [78, 68, 9, 30]])],
-                [180, 1, 1, fn (int $t) => self::shapes('petal', '#ffd6e2', 0.8, $t, [[62, 18, 11, 15], [18, 80, 13, -50]])],
-                [230, 1, -1, fn (int $t) => self::shapes('petal', '#ff8fb1', 0.7, $t, [[86, 52, 10, 60], [40, 88, 12, 0]])],
+                [130, 2, 1, fn (int $t) => self::shapes('petal', '#ffb3c9', 0.95, $t, [[24, 30, 12, -25], [78, 68, 9, 30]], edge: '#c9577c')],
+                [180, 1, 1, fn (int $t) => self::shapes('petal', '#ffd6e2', 0.85, $t, [[62, 18, 11, 15], [18, 80, 13, -50]], edge: '#c9577c')],
+                [230, 1, -1, fn (int $t) => self::shapes('petal', '#ff8fb1', 0.75, $t, [[86, 52, 10, 60], [40, 88, 12, 0]], edge: '#c9577c')],
             ],
             'confetti' => [
                 [140, 3, 1, fn (int $t) => self::shapes('confetti', '#5b8ff9', 0.95, $t, [[20, 26, 9, 24], [72, 66, 8, -40]])],
@@ -185,8 +185,22 @@ class Decorations
         return $out;
     }
 
+    /**
+     * 🚨 The header behind the weather can be any colour: dark, white, a
+     * theme's brand colour, or light in one colour scheme and dark in the
+     * other. A pale particle on its own vanishes on a light header (snow was
+     * white-on-white, reported on Discuss). So the pale weathers pass an
+     * `$edge`: a darker rim, EDGE px wide, drawn under each particle. On a
+     * dark header the rim melts into the background and the pale core shows;
+     * on a light one the rim draws the outline. The artwork is a data URI and
+     * cannot read CSS variables, so this is what keeps it readable on every
+     * header without knowing which one it is on. Rain needs no rim: its
+     * strokes are thin enough that mid blues read on light and dark alike.
+     */
+    protected const EDGE = 0.8;
+
     /** Soft dots: [x%, y%, radius in px]. */
-    protected static function dots(string $color, float $alpha, int $tile, array $points): string
+    protected static function dots(string $color, float $alpha, int $tile, array $points, ?string $edge = null): string
     {
         $body = '';
 
@@ -194,20 +208,22 @@ class Decorations
             $body .= "<circle cx='$x' cy='$y' r='".self::px($r, $tile)."'/>";
         }
 
-        return self::uri("<g fill='$color' opacity='$alpha'>$body</g>");
+        // The rim is a stroke painted UNDER the fill, so only its outer half shows.
+        $rim = $edge === null ? '' : " stroke='$edge' stroke-width='".self::px(self::EDGE * 2, $tile)."' paint-order='stroke'";
+
+        return self::uri("<g fill='$color'$rim opacity='$alpha'>$body</g>");
     }
 
     /** Hollow circles, for bubbles: [x%, y%, diameter in px]. */
-    protected static function rings(string $color, float $alpha, int $tile, array $points): string
+    protected static function rings(string $color, float $alpha, int $tile, array $points, ?string $edge = null): string
     {
         $body = '';
-        $width = self::px(1.4, $tile);
 
         foreach ($points as [$x, $y, $d]) {
             $body .= "<circle cx='$x' cy='$y' r='".self::px($d / 2, $tile)."'/>";
         }
 
-        return self::uri("<g fill='none' stroke='$color' stroke-width='$width' opacity='$alpha'>$body</g>");
+        return self::uri("<g fill='none' opacity='$alpha'>".self::lines($body, $color, 1.4, $tile, $edge).'</g>');
     }
 
     /** Slanted lines, for rain: [x%, y%, length in px, lean in px]. */
@@ -221,7 +237,19 @@ class Decorations
             $body .= "<path d='M$x ".$y."l$dx $dy'/>";
         }
 
-        return self::uri("<g stroke='$color' stroke-width='".self::px($weight, $tile)."' opacity='$alpha' stroke-linecap='round' fill='none'>$body</g>");
+        return self::uri("<g opacity='$alpha' stroke-linecap='round' fill='none'>".self::lines($body, $color, $weight, $tile, null).'</g>');
+    }
+
+    /**
+     * Stroked shapes, with the rim drawn as a wider copy underneath. One
+     * group opacity over both keeps the overlap from showing as a seam.
+     */
+    protected static function lines(string $body, string $color, float $weight, int $tile, ?string $edge): string
+    {
+        $line = "<g stroke='$color' stroke-width='".self::px($weight, $tile)."'>$body</g>";
+
+        return $edge === null ? $line
+            : "<g stroke='$edge' stroke-width='".self::px($weight + self::EDGE * 2, $tile)."'>$body</g>$line";
     }
 
     /**
@@ -230,7 +258,7 @@ class Decorations
      * Each shape is drawn in a 10x10 box around its own origin so that
      * rotating it spins it in place rather than swinging it across the tile.
      */
-    protected static function shapes(string $shape, string $color, float $alpha, int $tile, array $items): string
+    protected static function shapes(string $shape, string $color, float $alpha, int $tile, array $items, ?string $edge = null): string
     {
         $path = match ($shape) {
             // A pointed lens rather than a rounded blob: at 11px the points are
@@ -246,10 +274,15 @@ class Decorations
 
         foreach ($items as [$x, $y, $size, $rotation]) {
             $scale = round(self::px($size, $tile) / 10, 3);
-            $body .= "<g transform='translate($x $y) rotate($rotation) scale($scale)'>$path</g>";
+            // The shape is drawn in its own scaled units, so the rim's width
+            // is divided back out to stay EDGE px whatever the shape's size.
+            $rim = $edge === null ? '' : " stroke-width='".round(self::px(self::EDGE * 2, $tile) / $scale, 3)."'";
+            $body .= "<g transform='translate($x $y) rotate($rotation) scale($scale)'$rim>$path</g>";
         }
 
-        return self::uri("<g fill='$color' opacity='$alpha'>$body</g>");
+        $rim = $edge === null ? '' : " stroke='$edge' paint-order='stroke' stroke-linejoin='round'";
+
+        return self::uri("<g fill='$color'$rim opacity='$alpha'>$body</g>");
     }
 
     /** A length in screen pixels, expressed in the tile's 100-unit viewBox. */
