@@ -106,6 +106,16 @@ class Decorations
     }
 
     /**
+     * Particle sizes, Small / Medium / Large: how much bigger than drawn.
+     *
+     * 🚨 Only the PARTICLES grow, never the tile. A bigger tile also means
+     * fewer particles, and at 2x a 130px snow tile is taller than core's 52px
+     * header, so most headers showed almost no snow at all. 1.5 is the most
+     * the artwork allows: every particle still clears its tile's edge.
+     */
+    public const SIZES = [1 => 0.75, 2 => 1.0, 3 => 1.5];
+
+    /**
      * Weather layers: one entry per parallax layer, as
      * [background-image, tile size in px, tiles travelled down, tiles
      * travelled sideways].
@@ -130,56 +140,61 @@ class Decorations
      *
      * @return array<int, array{0:string,1:int,2:int,3:int}>
      */
-    public static function weather(string $name, int $density): array
+    public static function weather(string $name, int $density, int $size = 2): array
     {
         $defs = match ($name) {
             'snow' => [
-                [130, 4, 1, fn (int $t) => self::dots('#a9c9e8', 0.90, $t, [[18, 22, 2.2], [70, 58, 1.7], [44, 90, 2.0], [92, 34, 1.4]], edge: '#7d9cbf')],
-                [175, 2, -1, fn (int $t) => self::dots('#a9c9e8', 0.75, $t, [[34, 40, 1.9], [86, 16, 1.5], [58, 76, 2.1]], edge: '#7d9cbf')],
-                [230, 1, 1, fn (int $t) => self::dots('#a9c9e8', 0.60, $t, [[62, 28, 1.7], [16, 68, 1.4], [90, 88, 1.9]], edge: '#7d9cbf')],
+                [130, 4, 1, fn (float $t) => self::dots('#a9c9e8', 0.90, $t, [[18, 22, 2.2], [70, 58, 1.7], [44, 90, 2.0], [92, 34, 1.4]], edge: '#7d9cbf')],
+                [175, 2, -1, fn (float $t) => self::dots('#a9c9e8', 0.75, $t, [[34, 40, 1.9], [86, 16, 1.5], [58, 76, 2.1]], edge: '#7d9cbf')],
+                [230, 1, 1, fn (float $t) => self::dots('#a9c9e8', 0.60, $t, [[62, 28, 1.7], [16, 68, 1.4], [90, 88, 1.9]], edge: '#7d9cbf')],
             ],
             'rain' => [
-                [90, 3, 1, fn (int $t) => self::strokes('#8fb4f5', 0.70, $t, [[20, 18, 15, 12], [64, 52, 15, 12], [40, 84, 15, 12]], 1.3)],
-                [130, 3, 1, fn (int $t) => self::strokes('#a3c2f2', 0.55, $t, [[52, 26, 19, 14], [14, 70, 19, 14]], 1.5)],
-                [64, 4, 1, fn (int $t) => self::strokes('#7aa2e0', 0.50, $t, [[36, 40, 11, 10], [78, 78, 11, 10]], 1.1)],
+                [90, 3, 1, fn (float $t) => self::strokes('#8fb4f5', 0.70, $t, [[20, 18, 15, 12], [64, 52, 15, 12], [40, 74, 15, 12]], 1.3)],
+                [130, 3, 1, fn (float $t) => self::strokes('#a3c2f2', 0.55, $t, [[52, 26, 19, 14], [18, 70, 19, 14]], 1.5)],
+                [64, 4, 1, fn (float $t) => self::strokes('#7aa2e0', 0.50, $t, [[36, 40, 11, 10], [78, 72, 11, 10]], 1.1)],
             ],
             'embers' => [
-                [150, -2, 1, fn (int $t) => self::dots('#ff8a3d', 0.85, $t, [[26, 34, 2.0], [78, 72, 1.6], [50, 96, 2.2]])],
-                [190, -1, -1, fn (int $t) => self::dots('#ffc531', 0.60, $t, [[64, 24, 1.7], [18, 82, 2.0]])],
-                [240, -1, 1, fn (int $t) => self::dots('#ff5d3d', 0.45, $t, [[88, 48, 1.5], [34, 68, 1.8]])],
+                [150, -2, 1, fn (float $t) => self::dots('#ff8a3d', 0.85, $t, [[26, 34, 2.0], [78, 72, 1.6], [50, 96, 2.2]])],
+                [190, -1, -1, fn (float $t) => self::dots('#ffc531', 0.60, $t, [[64, 24, 1.7], [18, 82, 2.0]])],
+                [240, -1, 1, fn (float $t) => self::dots('#ff5d3d', 0.45, $t, [[88, 48, 1.5], [34, 68, 1.8]])],
             ],
             'bubbles' => [
-                [150, -2, 1, fn (int $t) => self::rings('#ffffff', 0.60, $t, [[26, 34, 11], [80, 78, 8]], edge: '#5f86b0')],
-                [200, -1, -1, fn (int $t) => self::rings('#dff1ff', 0.50, $t, [[64, 24, 14], [20, 84, 9]], edge: '#5f86b0')],
-                [250, -1, 1, fn (int $t) => self::rings('#ffffff', 0.45, $t, [[88, 52, 8], [40, 70, 12]], edge: '#5f86b0')],
+                [150, -2, 1, fn (float $t) => self::rings('#ffffff', 0.60, $t, [[26, 34, 11], [80, 78, 8]], edge: '#5f86b0')],
+                [200, -1, -1, fn (float $t) => self::rings('#dff1ff', 0.50, $t, [[64, 24, 14], [20, 84, 9]], edge: '#5f86b0')],
+                [250, -1, 1, fn (float $t) => self::rings('#ffffff', 0.45, $t, [[88, 52, 8], [40, 70, 12]], edge: '#5f86b0')],
             ],
             'sparkles' => [
-                [120, 2, 1, fn (int $t) => self::shapes('spark', '#ffe9a8', 0.95, $t, [[24, 30, 11, 0], [76, 70, 8, 20]], edge: '#b07d12')],
-                [170, 1, -1, fn (int $t) => self::shapes('spark', '#fff6d6', 0.80, $t, [[62, 22, 9, 10], [18, 76, 12, -15]], edge: '#b07d12')],
-                [215, 1, 1, fn (int $t) => self::shapes('spark', '#ffd166', 0.70, $t, [[86, 54, 10, 30], [36, 84, 7, 0]], edge: '#b07d12')],
+                [120, 2, 1, fn (float $t) => self::shapes('spark', '#ffe9a8', 0.95, $t, [[24, 30, 11, 0], [76, 70, 8, 20]], edge: '#b07d12')],
+                [170, 1, -1, fn (float $t) => self::shapes('spark', '#fff6d6', 0.80, $t, [[62, 22, 9, 10], [18, 76, 12, -15]], edge: '#b07d12')],
+                [215, 1, 1, fn (float $t) => self::shapes('spark', '#ffd166', 0.70, $t, [[86, 54, 10, 30], [36, 84, 7, 0]], edge: '#b07d12')],
             ],
             'leaves' => [
-                [140, 2, 1, fn (int $t) => self::shapes('leaf', '#e2761b', 0.95, $t, [[22, 28, 12, 25], [74, 72, 10, -40]])],
-                [190, 1, 1, fn (int $t) => self::shapes('leaf', '#c2521a', 0.8, $t, [[60, 20, 11, 70], [16, 78, 13, -20]])],
-                [240, 1, -1, fn (int $t) => self::shapes('leaf', '#f0a336', 0.7, $t, [[84, 50, 12, 130], [38, 86, 9, 10]])],
+                [140, 2, 1, fn (float $t) => self::shapes('leaf', '#e2761b', 0.95, $t, [[22, 28, 12, 25], [74, 72, 10, -40]])],
+                [190, 1, 1, fn (float $t) => self::shapes('leaf', '#c2521a', 0.8, $t, [[60, 20, 11, 70], [16, 78, 13, -20]])],
+                [240, 1, -1, fn (float $t) => self::shapes('leaf', '#f0a336', 0.7, $t, [[84, 50, 12, 130], [38, 86, 9, 10]])],
             ],
             'petals' => [
-                [130, 2, 1, fn (int $t) => self::shapes('petal', '#ffb3c9', 0.95, $t, [[24, 30, 12, -25], [78, 68, 9, 30]], edge: '#c9577c')],
-                [180, 1, 1, fn (int $t) => self::shapes('petal', '#ffd6e2', 0.85, $t, [[62, 18, 11, 15], [18, 80, 13, -50]], edge: '#c9577c')],
-                [230, 1, -1, fn (int $t) => self::shapes('petal', '#ff8fb1', 0.75, $t, [[86, 52, 10, 60], [40, 88, 12, 0]], edge: '#c9577c')],
+                [130, 2, 1, fn (float $t) => self::shapes('petal', '#ffb3c9', 0.95, $t, [[24, 30, 12, -25], [78, 68, 9, 30]], edge: '#c9577c')],
+                [180, 1, 1, fn (float $t) => self::shapes('petal', '#ffd6e2', 0.85, $t, [[62, 18, 11, 15], [18, 80, 13, -50]], edge: '#c9577c')],
+                [230, 1, -1, fn (float $t) => self::shapes('petal', '#ff8fb1', 0.75, $t, [[86, 52, 10, 60], [40, 88, 12, 0]], edge: '#c9577c')],
             ],
             'confetti' => [
-                [140, 3, 1, fn (int $t) => self::shapes('confetti', '#5b8ff9', 0.95, $t, [[20, 26, 9, 24], [72, 66, 8, -40]])],
-                [190, 2, -1, fn (int $t) => self::shapes('confetti', '#ff5d8f', 0.9, $t, [[58, 18, 9, -15], [16, 74, 8, 50]])],
-                [240, 2, 1, fn (int $t) => self::shapes('confetti', '#ffd166', 0.85, $t, [[84, 48, 8, 60], [36, 84, 9, 10]])],
+                [140, 3, 1, fn (float $t) => self::shapes('confetti', '#5b8ff9', 0.95, $t, [[20, 26, 9, 24], [72, 66, 8, -40]])],
+                [190, 2, -1, fn (float $t) => self::shapes('confetti', '#ff5d8f', 0.9, $t, [[58, 18, 9, -15], [16, 74, 8, 50]])],
+                [240, 2, 1, fn (float $t) => self::shapes('confetti', '#ffd166', 0.85, $t, [[84, 48, 8, 60], [36, 84, 9, 10]])],
             ],
             default => [],
         };
 
         $out = [];
 
-        foreach (array_slice($defs, 0, max(1, min(3, $density))) as [$size, $down, $across, $make]) {
-            $out[] = [$make($size), $size, $down, $across];
+        $scale = self::SIZES[$size] ?? 1.0;
+
+        foreach (array_slice($defs, 0, max(1, min(3, $density))) as [$tile, $down, $across, $make]) {
+            // A particle is drawn as a fraction of its tile, so drawing it against
+            // a smaller tile makes it bigger while the tile, and so how many
+            // particles fill the header, stays the same.
+            $out[] = [$make($tile / $scale), $tile, $down, $across];
         }
 
         return $out;
@@ -200,7 +215,7 @@ class Decorations
     protected const EDGE = 0.8;
 
     /** Soft dots: [x%, y%, radius in px]. */
-    protected static function dots(string $color, float $alpha, int $tile, array $points, ?string $edge = null): string
+    protected static function dots(string $color, float $alpha, float $tile, array $points, ?string $edge = null): string
     {
         $body = '';
 
@@ -215,7 +230,7 @@ class Decorations
     }
 
     /** Hollow circles, for bubbles: [x%, y%, diameter in px]. */
-    protected static function rings(string $color, float $alpha, int $tile, array $points, ?string $edge = null): string
+    protected static function rings(string $color, float $alpha, float $tile, array $points, ?string $edge = null): string
     {
         $body = '';
 
@@ -227,7 +242,7 @@ class Decorations
     }
 
     /** Slanted lines, for rain: [x%, y%, length in px, lean in px]. */
-    protected static function strokes(string $color, float $alpha, int $tile, array $lines, float $weight): string
+    protected static function strokes(string $color, float $alpha, float $tile, array $lines, float $weight): string
     {
         $body = '';
 
@@ -244,7 +259,7 @@ class Decorations
      * Stroked shapes, with the rim drawn as a wider copy underneath. One
      * group opacity over both keeps the overlap from showing as a seam.
      */
-    protected static function lines(string $body, string $color, float $weight, int $tile, ?string $edge): string
+    protected static function lines(string $body, string $color, float $weight, float $tile, ?string $edge): string
     {
         $line = "<g stroke='$color' stroke-width='".self::px($weight, $tile)."'>$body</g>";
 
@@ -258,7 +273,7 @@ class Decorations
      * Each shape is drawn in a 10x10 box around its own origin so that
      * rotating it spins it in place rather than swinging it across the tile.
      */
-    protected static function shapes(string $shape, string $color, float $alpha, int $tile, array $items, ?string $edge = null): string
+    protected static function shapes(string $shape, string $color, float $alpha, float $tile, array $items, ?string $edge = null): string
     {
         $path = match ($shape) {
             // A pointed lens rather than a rounded blob: at 11px the points are
@@ -286,7 +301,7 @@ class Decorations
     }
 
     /** A length in screen pixels, expressed in the tile's 100-unit viewBox. */
-    protected static function px(float $pixels, int $tile): float
+    protected static function px(float $pixels, float $tile): float
     {
         return round($pixels / max(1, $tile) * 100, 3);
     }

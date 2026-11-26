@@ -27,7 +27,8 @@ const t = (key: string, params?: any) => app.translator.trans(`ernestdefoe-logo-
 
 type Art = {
   decorations: Record<string, string>;
-  weather: Record<string, [string, number, number, number][]>;
+  /** Per weather, per particle size (1–3). */
+  weather: Record<string, Record<number, [string, number, number, number][]>>;
   assets: string;
   activeSeason: string | null;
 };
@@ -198,7 +199,7 @@ export default class LogoStudio extends Component<{ valueStream: (v?: string) =>
     const decorationOffset = Math.round(decorationSize * 0.3);
     const [vertical, horizontal] = (season?.corner || 'top-right').split('-');
 
-    const weatherLayers = season?.weather ? (art.weather[season.weather] || []).slice(0, season.weatherDensity ?? 2) : [];
+    const weatherLayers = season?.weather ? (art.weather[season.weather]?.[season.weatherSize ?? 2] || []).slice(0, season.weatherDensity ?? 2) : [];
     const recolor = (season?.recolor as any) || cfg.recolor;
 
     return m('.LogoManager-preview', [
@@ -766,7 +767,7 @@ export default class LogoStudio extends Component<{ valueStream: (v?: string) =>
             t('season_none')
           ),
           ...WEATHER.map((name) => {
-            const layers = art.weather[name] || [];
+            const layers = art.weather[name]?.[rule.weatherSize ?? 2] || [];
             return m(
               'button.LogoManager-weatherTile',
               {
@@ -784,6 +785,7 @@ export default class LogoStudio extends Component<{ valueStream: (v?: string) =>
         ]),
       ]),
       rule.weather ? slider('season_density', rule.weatherDensity ?? 2, 1, 3, '', (v) => set('weatherDensity', v)) : null,
+      rule.weather ? slider('season_weather_size', rule.weatherSize ?? 2, 1, 3, '', (v) => set('weatherSize', v)) : null,
     ]);
   }
 }

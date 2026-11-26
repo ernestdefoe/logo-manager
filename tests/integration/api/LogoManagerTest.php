@@ -275,7 +275,7 @@ class LogoManagerTest extends TestCase
         $art = json_decode($m[1], true)['logoManagerArt'];
 
         $this->assertNotEmpty($art['decorations']);
-        $this->assertNotEmpty($art['weather']);
+        $this->assertSame(['1', '2', '3'], array_map('strval', array_keys($art['weather']['snow'])), 'One set of weather art per particle size');
         $this->assertStringEndsWith('/assets/', $art['assets']);
         $this->assertNull($art['activeSeason']);
     }
@@ -298,6 +298,25 @@ class LogoManagerTest extends TestCase
         // `.affix`; a `position` here put the header in flow for those first
         // frames and pushed the whole page down by its height.
         $this->assertDoesNotMatchRegularExpression('/\.App-(?:header|navigation)\{[^}]*position:/', $m[1]);
+    }
+
+    #[Test]
+    public function weather_size_grows_the_particles_not_the_tiles()
+    {
+        $this->app()->getContainer()->make(\Flarum\Settings\SettingsRepositoryInterface::class)->set(Config::KEY, json_encode([
+            'seasons' => ['enabled' => true, 'rules' => [[
+                'id' => 'always', 'enabled' => true,
+                'when' => ['type' => 'range', 'from' => '01-01', 'to' => '12-31'],
+                'weather' => 'snow', 'weatherDensity' => 1, 'weatherSize' => 3,
+            ]]],
+        ]));
+
+        preg_match('#<style id="logo-manager">(.*?)</style>#s', $this->page(), $m);
+
+        // Snow's first flake is 2.2px on a 130px tile: 1.692 units drawn, 2.538 at Large.
+        $this->assertStringContainsString("r='2.538'", $m[1]);
+        // The tile, and so how many flakes fill the header, is unchanged.
+        $this->assertStringContainsString('background-size:130px 130px', $m[1]);
     }
 
     #[Test]

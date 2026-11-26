@@ -442,7 +442,7 @@ class StyleSheet
             return '';
         }
 
-        $layers = Decorations::weather($name, $this->season->weatherDensity());
+        $layers = Decorations::weather($name, $this->season->weatherDensity(), $this->season->weatherSize());
 
         if ($layers === []) {
             return '';

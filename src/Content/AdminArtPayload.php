@@ -40,7 +40,11 @@ class AdminArtPayload
         $weather = [];
 
         foreach (Season::WEATHER as $name) {
-            $weather[$name] = Decorations::weather($name, 3);
+            // One set per particle size, keyed 1–3, so the preview shows the
+            // size picked without asking the server again.
+            foreach (array_keys(Decorations::SIZES) as $size) {
+                $weather[$name][$size] = Decorations::weather($name, 3, $size);
+            }
         }
 
         $document->payload['logoManagerArt'] = [

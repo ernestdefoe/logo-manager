@@ -40,6 +40,8 @@ export type SeasonRule = {
   decorationScale?: number;
   weather?: string | null;
   weatherDensity?: number;
+  /** Particle size, 1–3: Small, Medium, Large. */
+  weatherSize?: number;
   effects?: Partial<Effects> | null;
   recolor?: { enabled: boolean; color: string } | null;
   email?: { file: string; size: string | null } | null;

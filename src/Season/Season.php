@@ -143,6 +143,14 @@ class Season
         return is_numeric($value) ? max(1, min(3, (int) $value)) : 2;
     }
 
+    /** Particle size, 1–3: Small, Medium, Large (see Decorations::SIZES). */
+    public function weatherSize(): int
+    {
+        $value = $this->rule['weatherSize'] ?? 2;
+
+        return is_numeric($value) ? max(1, min(3, (int) $value)) : 2;
+    }
+
     public function effectOverrides(): ?array
     {
         return is_array($this->rule['effects'] ?? null) ? $this->rule['effects'] : null;
